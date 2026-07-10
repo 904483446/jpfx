@@ -1,10 +1,22 @@
-from dataclasses import dataclass
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass(frozen=True)
-class Settings:
+ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=ROOT_ENV_FILE,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     app_name: str = "AI Competitor Intelligence Workspace API"
     api_v1_prefix: str = "/api/v1"
+    database_url: str | None = None
+    test_database_url: str | None = None
 
 
 settings = Settings()
