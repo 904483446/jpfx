@@ -23,17 +23,20 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）和 Task 1（FastAPI 后端骨架）已经完成，当前进入 Task 2：数据库与迁移基础。
+V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）和 Task 2（数据库与迁移基础）已经完成，下一步是 Task 3：用户注册。
 
 已完成：
 
 - 核心文档与前后端目录入口
 - FastAPI 应用入口和 `/api/v1` 统一前缀
 - `GET /api/v1/health` 健康检查
-- 统一错误响应基础结构
+- 统一中文错误响应
 - 后端自动化测试
+- Docker PostgreSQL + pgvector 开发库和隔离测试库
+- SQLAlchemy 同步会话、基础模型与 Alembic 首次迁移
+- `users`、`spaces`、`knowledge_bases` 基础表及数据库级隔离约束
 
-Task 2 将补充 SQLAlchemy、Alembic、Docker PostgreSQL + pgvector，以及 `users`、`spaces`、`knowledge_bases` 三张基础表。本阶段不接入外部 API，也不提前实现注册登录、文档、RAG 或 Agent。
+Task 3 将基于现有数据库基础实现用户注册。本阶段不接入外部 API，也不提前实现登录、文档、RAG 或 Agent。
 
 ## 目录结构
 
@@ -92,4 +95,4 @@ cd services/api
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-当前只执行 V0.1 Task 2，不提前实现注册登录、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 3，不提前实现登录、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
