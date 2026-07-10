@@ -1,0 +1,95 @@
+# AI Competitor Intelligence Workspace
+
+中文暂定名：竞品智研台
+
+## 项目定位
+
+面向国内 AI 产品经理的竞品分析工作台。项目目标是把用户私有资料、公开竞品信息、RAG 检索和固定多 Agent 分析流程结合起来，生成有来源、有证据、有不确定性提示的中文结构化竞品分析报告。
+
+当前仓库以 `PRD.md`、`TECH_SPEC.md`、`TASK_BREAKDOWN.md` 为核心依据推进开发，功能范围和执行顺序以这些文档为准。
+
+## 技术栈方向
+
+- 前端：Next.js + React + TypeScript + Tailwind CSS + shadcn/ui
+- 后端：FastAPI + Pydantic + SQLAlchemy + Alembic
+- 数据库：PostgreSQL + pgvector
+- 本地数据库：Docker PostgreSQL + pgvector
+- 线上数据与文件存储：Supabase PostgreSQL + Supabase Storage
+- 后端部署：Render
+- 前端部署：Vercel
+- 默认聊天模型：DeepSeek，用户自行配置 API Key
+- 默认 embedding：通义 DashScope `text-embedding-v4`
+- 默认搜索：博查 AI Search API
+
+## 当前阶段
+
+V0.1 Task 0（项目初始化与文档对齐）和 Task 1（FastAPI 后端骨架）已经完成，当前进入 Task 2：数据库与迁移基础。
+
+已完成：
+
+- 核心文档与前后端目录入口
+- FastAPI 应用入口和 `/api/v1` 统一前缀
+- `GET /api/v1/health` 健康检查
+- 统一错误响应基础结构
+- 后端自动化测试
+
+Task 2 将补充 SQLAlchemy、Alembic、Docker PostgreSQL + pgvector，以及 `users`、`spaces`、`knowledge_bases` 三张基础表。本阶段不接入外部 API，也不提前实现注册登录、文档、RAG 或 Agent。
+
+## 目录结构
+
+```text
+jpfx/
+  PRD.md
+  TECH_SPEC.md
+  TASK_BREAKDOWN.md
+  README.md
+  .env.example
+  apps/
+    web/
+  services/
+    api/
+```
+
+后续任务会继续补齐：
+
+- `services/api`：FastAPI 应用、API 路由、数据库模型、服务层、测试和迁移。
+- `apps/web`：Next.js App Router 页面、组件、API Client 和类型定义。
+
+## 本地开发要求
+
+后续正式进入代码开发时需要准备：
+
+- Node.js，用于前端 Next.js 项目
+- `npm.cmd`，作为 Windows 环境下的前端包管理命令
+- Python，用于 FastAPI 后端
+- Docker，用于本地 PostgreSQL + pgvector
+- PostgreSQL + pgvector，用于业务数据和向量检索
+
+### 后端测试与启动
+
+```powershell
+cd services/api
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+启动后访问 `http://127.0.0.1:8000/api/v1/health`，预期返回 `{"status":"ok"}`。前端应用尚未创建。
+
+## 环境变量
+
+请参考 `.env.example` 创建本地 `.env`。不要把 `.env`、真实 API Key、数据库密码、JWT 密钥或加密密钥提交到仓库。
+
+用户自己的 DeepSeek API Key 未来会加密保存在数据库中，不作为平台环境变量写入代码仓库。
+
+## 开发顺序
+
+开发执行顺序以 `TASK_BREAKDOWN.md` 为准：
+
+1. V0.1：项目骨架与基础用户系统
+2. V0.2：知识库与文档上传
+3. V0.3：RAG 检索
+4. V0.4：竞品分析任务与报告生成
+5. V0.5：多 Agent 工作流优化与导出
+6. V1.0：GitHub 可展示版本
+
+当前只执行 V0.1 Task 2，不提前实现注册登录、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
