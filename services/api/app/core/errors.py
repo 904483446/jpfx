@@ -1,8 +1,14 @@
+import logging
 from typing import Any
 
 from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+logger = logging.getLogger(__name__)
 
 
 def error_response(
@@ -40,5 +46,34 @@ async def http_exception_handler(
         status_code=exc.status_code,
         code="HTTP_ERROR",
         message="请求处理失败",
+        details={},
+    )
+
+
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    return error_response(
+        status_code=422,
+        code="VALIDATION_ERROR",
+        message="请求参数校验失败",
+        details={"errors": jsonable_encoder(exc.errors())},
+    )
+
+
+async def internal_exception_handler(
+    request: Request,
+    exc: Exception,
+) -> JSONResponse:
+    logger.error(
+        "Unhandled exception while processing %s",
+        request.url.path,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return error_response(
+        status_code=500,
+        code="INTERNAL_SERVER_ERROR",
+        message="服务器内部错误",
         details={},
     )
