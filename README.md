@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）和 Task 2（数据库与迁移基础）已经完成，下一步是 Task 3：用户注册。
+V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）和 Task 3（用户注册）已经完成，下一步是 Task 4：用户登录与退出。
 
 已完成：
 
@@ -35,8 +35,11 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - Docker PostgreSQL + pgvector 开发库和隔离测试库
 - SQLAlchemy 同步会话、基础模型与 Alembic 首次迁移
 - `users`、`spaces`、`knowledge_bases` 基础表及数据库级隔离约束
+- `POST /api/v1/auth/register` 用户注册接口
+- 邮箱与昵称规范化、Argon2id 密码哈希及重复邮箱保护
+- 注册请求、服务层、数据库约束和 API 集成自动化测试
 
-Task 3 将基于现有数据库基础实现用户注册。本阶段不接入外部 API，也不提前实现登录、文档、RAG 或 Agent。
+Task 4 将基于现有注册和密码安全基础实现登录与退出。本阶段不接入外部 API，也不提前实现当前用户接口、文档、RAG 或 Agent。
 
 ## 目录结构
 
@@ -80,6 +83,24 @@ cd services/api
 
 启动后访问 `http://127.0.0.1:8000/api/v1/health`，预期返回 `{"status":"ok"}`。前端应用尚未创建。
 
+注册用户示例：
+
+```powershell
+$body = @{
+  email = "user@example.com"
+  password = "valid-password"
+  display_name = "示例用户"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/v1/auth/register" `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+成功时接口返回 HTTP 201 和用户公开字段，不返回密码或密码哈希。
+
 ## 环境变量
 
 请参考 `.env.example` 创建本地 `.env`。不要把 `.env`、真实 API Key、数据库密码、JWT 密钥或加密密钥提交到仓库。
@@ -97,4 +118,4 @@ cd services/api
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 3，不提前实现登录、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 4，不提前实现当前用户接口、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
