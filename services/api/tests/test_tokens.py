@@ -35,3 +35,13 @@ def test_create_access_token_requires_secret():
             settings=Settings(_env_file=None, jwt_secret=None),
             now=NOW,
         )
+
+
+@pytest.mark.parametrize("weak_secret", ["change-me", "x" * 31])
+def test_create_access_token_rejects_weak_secret(weak_secret: str):
+    with pytest.raises(RuntimeError, match="JWT_SECRET 至少需要 32 字节"):
+        create_access_token(
+            USER_ID,
+            settings=Settings(_env_file=None, jwt_secret=weak_secret),
+            now=NOW,
+        )

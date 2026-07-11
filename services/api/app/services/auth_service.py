@@ -8,6 +8,7 @@ from app.models import User
 from app.schemas.auth import LoginRequest, RegisterRequest
 
 EMAIL_UNIQUE_CONSTRAINT = "uq_users_email"
+DUMMY_PASSWORD_HASH = hash_password("dummy-password-for-login-timing")
 
 
 def email_already_registered() -> AppError:
@@ -57,6 +58,8 @@ def register_user(database_session: Session, payload: RegisterRequest) -> User:
 
 def authenticate_user(database_session: Session, payload: LoginRequest) -> User:
     user = database_session.scalar(select(User).where(User.email == str(payload.email)))
-    if user is None or not verify_password(payload.password, user.password_hash):
+    encoded_password = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
+    password_matches = verify_password(payload.password, encoded_password)
+    if user is None or not password_matches:
         raise invalid_credentials()
     return user

@@ -1,3 +1,6 @@
+from unittest.mock import Mock
+
+import app.services.auth_service as auth_service
 import pytest
 from app.core.errors import AppError
 from app.schemas.auth import LoginRequest, RegisterRequest
@@ -52,3 +55,22 @@ def test_authenticate_user_hides_failure_reason(
     assert captured.value.status_code == 401
     assert captured.value.code == "INVALID_CREDENTIALS"
     assert captured.value.message == "邮箱或密码错误"
+
+
+def test_missing_user_still_verifies_a_password_hash(
+    database_session,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    verifier = Mock(return_value=False)
+    monkeypatch.setattr(auth_service, "verify_password", verifier)
+
+    with pytest.raises(AppError):
+        authenticate_user(
+            database_session,
+            LoginRequest(
+                email="missing@example.com",
+                password="correct-password",
+            ),
+        )
+
+    verifier.assert_called_once()

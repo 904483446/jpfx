@@ -26,6 +26,8 @@ def create_access_token(
 ) -> str:
     if not settings.jwt_secret:
         raise RuntimeError("JWT_SECRET 未配置")
+    if len(settings.jwt_secret.encode("utf-8")) < 32:
+        raise RuntimeError("JWT_SECRET 至少需要 32 字节")
     issued_at = now or datetime.now(UTC)
     expires_at = issued_at + timedelta(days=settings.access_token_expire_days)
     return jwt.encode(
