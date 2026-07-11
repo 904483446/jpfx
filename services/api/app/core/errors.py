@@ -10,6 +10,22 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger(__name__)
 
 
+class AppError(Exception):
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        code: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+        self.details = details or {}
+
+
 def error_response(
     *,
     status_code: int,
@@ -46,6 +62,18 @@ async def http_exception_handler(
         code="HTTP_ERROR",
         message="请求处理失败",
         details={},
+    )
+
+
+async def app_exception_handler(
+    request: Request,
+    exc: AppError,
+) -> JSONResponse:
+    return error_response(
+        status_code=exc.status_code,
+        code=exc.code,
+        message=exc.message,
+        details=exc.details,
     )
 
 
