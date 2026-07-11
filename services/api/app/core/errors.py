@@ -26,6 +26,14 @@ class AppError(Exception):
         self.details = details or {}
 
 
+def unauthorized() -> AppError:
+    return AppError(
+        status_code=401,
+        code="UNAUTHORIZED",
+        message="登录状态无效或已过期",
+    )
+
+
 def error_response(
     *,
     status_code: int,

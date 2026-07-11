@@ -1,5 +1,15 @@
+from app.core.errors import unauthorized
 from app.main import create_app
 from fastapi.testclient import TestClient
+
+
+def test_unauthorized_has_fixed_public_contract():
+    error = unauthorized()
+
+    assert error.status_code == 401
+    assert error.code == "UNAUTHORIZED"
+    assert error.message == "登录状态无效或已过期"
+    assert error.details == {}
 
 
 def test_app_error_returns_public_uniform_error():

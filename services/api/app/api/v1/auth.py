@@ -3,9 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.db.session import get_db_session
+from app.models import User
 from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
 from app.services.auth_service import authenticate_user, register_user
 
@@ -42,6 +44,13 @@ def login(
         path="/",
     )
     return UserResponse.model_validate(user)
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> UserResponse:
+    return UserResponse.model_validate(current_user)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
