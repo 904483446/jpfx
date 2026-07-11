@@ -12,7 +12,9 @@ TEST_SECRET = "test-secret-with-at-least-32-bytes"
 
 
 def test_get_jwt_secret_returns_configured_secret():
-    assert get_jwt_secret(Settings(_env_file=None, jwt_secret=TEST_SECRET)) == TEST_SECRET
+    assert (
+        get_jwt_secret(Settings(_env_file=None, jwt_secret=TEST_SECRET)) == TEST_SECRET
+    )
 
 
 @pytest.mark.parametrize(
