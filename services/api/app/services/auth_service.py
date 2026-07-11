@@ -3,9 +3,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models import User
-from app.schemas.auth import RegisterRequest
+from app.schemas.auth import LoginRequest, RegisterRequest
 
 EMAIL_UNIQUE_CONSTRAINT = "uq_users_email"
 
@@ -15,6 +15,14 @@ def email_already_registered() -> AppError:
         status_code=409,
         code="EMAIL_ALREADY_REGISTERED",
         message="该邮箱已注册",
+    )
+
+
+def invalid_credentials() -> AppError:
+    return AppError(
+        status_code=401,
+        code="INVALID_CREDENTIALS",
+        message="邮箱或密码错误",
     )
 
 
@@ -44,4 +52,11 @@ def register_user(database_session: Session, payload: RegisterRequest) -> User:
         raise
 
     database_session.refresh(user)
+    return user
+
+
+def authenticate_user(database_session: Session, payload: LoginRequest) -> User:
+    user = database_session.scalar(select(User).where(User.email == str(payload.email)))
+    if user is None or not verify_password(payload.password, user.password_hash):
+        raise invalid_credentials()
     return user
