@@ -2,7 +2,6 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
 
 

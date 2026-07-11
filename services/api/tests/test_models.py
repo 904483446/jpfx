@@ -1,9 +1,8 @@
 import importlib
 
+from app.db.base import Base
 from sqlalchemy import ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
-
-from app.db.base import Base
 
 
 def load_model_tables():
@@ -72,9 +71,7 @@ def test_user_and_space_constraints_support_isolation():
 
     assert ("email",) in unique_column_sets(users)
     assert ("id", "user_id") in unique_column_sets(spaces)
-    assert ("user_id",) in {
-        tuple(index.columns.keys()) for index in spaces.indexes
-    }
+    assert ("user_id",) in {tuple(index.columns.keys()) for index in spaces.indexes}
 
     user_foreign_key = next(iter(spaces.c.user_id.foreign_keys))
     assert user_foreign_key.target_fullname == "users.id"

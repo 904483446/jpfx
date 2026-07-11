@@ -1,16 +1,13 @@
 import importlib
 
 import pytest
-from sqlalchemy import text
-
 from app.core.config import Settings
+from sqlalchemy import text
 
 
 def test_settings_load_database_urls_from_environment(monkeypatch):
     database_url = "postgresql+psycopg://user:password@localhost:5432/app"
-    test_database_url = (
-        "postgresql+psycopg://user:password@localhost:5433/app_test"
-    )
+    test_database_url = "postgresql+psycopg://user:password@localhost:5433/app_test"
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("TEST_DATABASE_URL", test_database_url)
 

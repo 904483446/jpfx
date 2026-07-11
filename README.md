@@ -72,6 +72,8 @@ jpfx/
 
 ```powershell
 cd services/api
+.\.venv\Scripts\python.exe -m ruff check --no-cache .
+.\.venv\Scripts\python.exe -m ruff format --check --no-cache .
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```

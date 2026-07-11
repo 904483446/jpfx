@@ -4,13 +4,11 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from app.core.config import Settings
+from app.models import KnowledgeBase, Space, User
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
-from app.core.config import Settings
-from app.models import KnowledgeBase, Space, User
-
 
 API_ROOT = Path(__file__).resolve().parents[1]
 
@@ -124,10 +122,7 @@ def test_deleting_user_cascades_to_spaces_and_knowledge_bases(
 
     assert database_session.scalar(select(func.count()).select_from(User)) == 0
     assert database_session.scalar(select(func.count()).select_from(Space)) == 0
-    assert (
-        database_session.scalar(select(func.count()).select_from(KnowledgeBase))
-        == 0
-    )
+    assert database_session.scalar(select(func.count()).select_from(KnowledgeBase)) == 0
 
 
 def test_physically_deleting_space_cascades_to_knowledge_base(
@@ -149,7 +144,4 @@ def test_physically_deleting_space_cascades_to_knowledge_base(
 
     assert database_session.scalar(select(func.count()).select_from(User)) == 1
     assert database_session.scalar(select(func.count()).select_from(Space)) == 0
-    assert (
-        database_session.scalar(select(func.count()).select_from(KnowledgeBase))
-        == 0
-    )
+    assert database_session.scalar(select(func.count()).select_from(KnowledgeBase)) == 0

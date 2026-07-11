@@ -11,9 +11,7 @@ from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 class Space(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "spaces"
-    __table_args__ = (
-        UniqueConstraint("id", "user_id", name="uq_spaces_id_user_id"),
-    )
+    __table_args__ = (UniqueConstraint("id", "user_id", name="uq_spaces_id_user_id"),)
 
     user_id: Mapped[UUID] = mapped_column(
         PostgreSQLUUID(as_uuid=True),
