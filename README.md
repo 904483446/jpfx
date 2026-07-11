@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）和 Task 2（数据库与迁移基础）已经完成，下一步是 Task 3：用户注册。
+V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）和 Task 4（用户登录与退出）已经完成，下一步是 Task 5：当前用户与鉴权依赖。
 
 已完成：
 
@@ -35,8 +35,14 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - Docker PostgreSQL + pgvector 开发库和隔离测试库
 - SQLAlchemy 同步会话、基础模型与 Alembic 首次迁移
 - `users`、`spaces`、`knowledge_bases` 基础表及数据库级隔离约束
+- `POST /api/v1/auth/register` 用户注册接口
+- 邮箱与昵称规范化、Argon2id 密码哈希及重复邮箱保护
+- 注册请求、服务层、数据库约束和 API 集成自动化测试
+- `POST /api/v1/auth/login` 和 `POST /api/v1/auth/logout`
+- 7 天有效的 JWT httpOnly Cookie 登录态
+- 统一登录失败响应和幂等退出
 
-Task 3 将基于现有数据库基础实现用户注册。本阶段不接入外部 API，也不提前实现登录、文档、RAG 或 Agent。
+Task 5 将基于现有 Cookie 登录态实现当前用户查询与鉴权依赖。本阶段不接入外部 API，也不提前实现产品空间、文档、RAG 或 Agent。
 
 ## 目录结构
 
@@ -80,9 +86,53 @@ cd services/api
 
 启动后访问 `http://127.0.0.1:8000/api/v1/health`，预期返回 `{"status":"ok"}`。前端应用尚未创建。
 
+注册用户示例：
+
+```powershell
+$body = @{
+  email = "user@example.com"
+  password = "valid-password"
+  display_name = "示例用户"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/v1/auth/register" `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+成功时接口返回 HTTP 201 和用户公开字段，不返回密码或密码哈希。
+
+登录与退出示例：
+
+```powershell
+$loginBody = @{
+  email = "user@example.com"
+  password = "valid-password"
+} | ConvertTo-Json
+
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/v1/auth/login" `
+  -ContentType "application/json" `
+  -Body $loginBody `
+  -WebSession $session
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/v1/auth/logout" `
+  -WebSession $session
+```
+
+登录成功返回用户公开字段，并设置 7 天有效的 httpOnly Cookie；退出返回 HTTP 204 并清除该 Cookie。
+
 ## 环境变量
 
 请参考 `.env.example` 创建本地 `.env`。不要把 `.env`、真实 API Key、数据库密码、JWT 密钥或加密密钥提交到仓库。
+
+登录功能要求本地 `.env` 配置足够长且随机的 `JWT_SECRET`。生产环境还必须设置 `AUTH_COOKIE_SECURE=true`，确保登录 Cookie 只通过 HTTPS 发送。
 
 用户自己的 DeepSeek API Key 未来会加密保存在数据库中，不作为平台环境变量写入代码仓库。
 
@@ -97,4 +147,4 @@ cd services/api
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 3，不提前实现登录、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 5，不提前实现产品空间、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
