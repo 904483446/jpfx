@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）和 Task 4（用户登录与退出）已经完成，下一步是 Task 5：当前用户与鉴权依赖。
+V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）、Task 4（用户登录与退出）和 Task 5（当前用户与鉴权依赖）已经完成，下一步是 Task 6：产品空间 API。
 
 已完成：
 
@@ -41,8 +41,9 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - `POST /api/v1/auth/login` 和 `POST /api/v1/auth/logout`
 - 7 天有效的 JWT httpOnly Cookie 登录态
 - 统一登录失败响应和幂等退出
+- `GET /api/v1/auth/me` 与可复用的当前用户鉴权依赖
 
-Task 5 将基于现有 Cookie 登录态实现当前用户查询与鉴权依赖。本阶段不接入外部 API，也不提前实现产品空间、文档、RAG 或 Agent。
+Task 6 将在现有鉴权依赖基础上实现产品空间 API，并且所有查询必须按当前用户 `id` 做数据隔离；不提前实现文档、RAG 或 Agent。
 
 ## 目录结构
 
@@ -147,4 +148,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 5，不提前实现产品空间、RAG、Agent、文档上传、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 6，不提前实现 RAG、Agent、文档上传、报告导出、团队协作或付费系统。
