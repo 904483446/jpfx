@@ -1,11 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.security import create_access_token
 from app.db.session import get_db_session
-from app.schemas.auth import RegisterRequest, UserResponse
-from app.services.auth_service import register_user
+from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.services.auth_service import authenticate_user, register_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,3 +23,33 @@ def register(
 ) -> UserResponse:
     user = register_user(database_session, payload)
     return UserResponse.model_validate(user)
+
+
+@router.post("/login", response_model=UserResponse)
+def login(
+    payload: LoginRequest,
+    response: Response,
+    database_session: Annotated[Session, Depends(get_db_session)],
+) -> UserResponse:
+    user = authenticate_user(database_session, payload)
+    response.set_cookie(
+        key=settings.auth_cookie_name,
+        value=create_access_token(user.id),
+        max_age=settings.access_token_expire_days * 24 * 60 * 60,
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite="lax",
+        path="/",
+    )
+    return UserResponse.model_validate(user)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.auth_cookie_name,
+        path="/",
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite="lax",
+    )
