@@ -2,6 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError, apiRequest, getApiBaseUrl } from "./api-client";
 
+function assertNoContentResponseType(): void {
+  // @ts-expect-error 204 responses may be undefined
+  const noContentResponse: Promise<{ id: string }> = apiRequest<{ id: string }>("/auth/logout");
+  void noContentResponse;
+}
+
+void assertNoContentResponseType;
+
 describe("getApiBaseUrl", () => {
   afterEach(() => {
     vi.unstubAllEnvs();

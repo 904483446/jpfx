@@ -21,7 +21,7 @@ export function getApiBaseUrl(): string {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T | undefined> {
   try {
     const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
     const response = await fetch(`${getApiBaseUrl()}/${normalizedPath}`, {
@@ -30,7 +30,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     });
 
     if (response.status === 204) {
-      return undefined as T;
+      return undefined;
     }
 
     const body = await parseJson(response);
