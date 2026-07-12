@@ -1,7 +1,7 @@
 # Task 7：前端 Next.js 骨架设计
 
 **日期：** 2026-07-12  
-**状态：** 已确认，待编写实施计划  
+**状态：** 已完成
 **范围：** V0.1 Task 7，仅创建可运行、可浏览的 Next.js 前端骨架。
 
 ## 1. 目标
@@ -54,7 +54,7 @@ Task 7 不实现以下行为：
 - 在 `apps/web` 使用 Next.js App Router、React、TypeScript、Tailwind CSS。
 - 使用 npm（Windows 命令为 `npm.cmd`）。
 - 配置 shadcn/ui，并实际复用其 `Button` 与 `Input` 组件；页面布局和专有展示组件使用 Tailwind 编写。
-- 使用 `next/font` 提供可回退的无衬线字体配置，避免依赖手工下载字体文件。
+- 使用本机无衬线字体栈，不依赖 `next/font` 或外部字体下载，保证离线构建可用。
 
 ### 4.2 建议模块边界
 
