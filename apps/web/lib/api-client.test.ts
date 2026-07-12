@@ -60,10 +60,21 @@ describe("apiRequest", () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://127.0.0.1:8000/api/v1");
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("connection refused"));
 
-    await expect(apiRequest("/health")).rejects.toMatchObject({
+    let rejectedError: unknown;
+
+    try {
+      await apiRequest("/health");
+    } catch (error) {
+      rejectedError = error;
+    }
+
+    expect(rejectedError).toBeInstanceOf(ApiClientError);
+    expect(rejectedError).toMatchObject({
       code: "NETWORK_ERROR",
       message: "网络请求失败，请稍后重试",
     } satisfies Partial<ApiClientError>);
+    expect(rejectedError).not.toHaveProperty("cause");
+    expect((rejectedError as ApiClientError).message).not.toContain("connection refused");
   });
 
   it("returns undefined for a successful empty 204 response", async () => {
