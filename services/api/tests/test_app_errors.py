@@ -1,4 +1,4 @@
-from app.core.errors import unauthorized
+from app.core.errors import space_not_found, unauthorized
 from app.main import create_app
 from fastapi.testclient import TestClient
 
@@ -9,6 +9,15 @@ def test_unauthorized_has_fixed_public_contract():
     assert error.status_code == 401
     assert error.code == "UNAUTHORIZED"
     assert error.message == "登录状态无效或已过期"
+    assert error.details == {}
+
+
+def test_space_not_found_has_fixed_public_contract():
+    error = space_not_found()
+
+    assert error.status_code == 404
+    assert error.code == "SPACE_NOT_FOUND"
+    assert error.message == "产品空间不存在"
     assert error.details == {}
 
 

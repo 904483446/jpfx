@@ -34,6 +34,14 @@ def unauthorized() -> AppError:
     )
 
 
+def space_not_found() -> AppError:
+    return AppError(
+        status_code=404,
+        code="SPACE_NOT_FOUND",
+        message="产品空间不存在",
+    )
+
+
 def error_response(
     *,
     status_code: int,
