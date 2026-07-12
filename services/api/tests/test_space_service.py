@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 from app.core.errors import AppError
-from app.models import KnowledgeBase, Space
+from app.models import KnowledgeBase
 from app.schemas.auth import RegisterRequest
 from app.schemas.space import SpaceCreateRequest
 from app.services.auth_service import register_user
@@ -56,12 +56,17 @@ def test_get_space_hides_missing_and_other_user_spaces(
 ):
     user_a = create_user(database_session, "detail-a@example.com")
     user_b = create_user(database_session, "detail-b@example.com")
-    other_space = create_space(database_session, user_b, SpaceCreateRequest(name="B 空间"))
+    other_space = create_space(
+        database_session, user_b, SpaceCreateRequest(name="B 空间")
+    )
 
     for requested_space_id in (space_id, other_space.id):
         with pytest.raises(AppError) as captured:
             get_space(database_session, user_a, requested_space_id)
-        assert (captured.value.status_code, captured.value.code) == (404, "SPACE_NOT_FOUND")
+        assert (captured.value.status_code, captured.value.code) == (
+            404,
+            "SPACE_NOT_FOUND",
+        )
 
 
 def test_get_space_hides_soft_deleted_space(database_session: Session):

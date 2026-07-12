@@ -15,7 +15,9 @@ TEST_SECRET = "test-secret-with-at-least-32-bytes"
 
 
 @pytest.fixture
-def client(database_session: Session, monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]:
+def client(
+    database_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> Generator[TestClient, None, None]:
     def override_database_session() -> Generator[Session, None, None]:
         yield database_session
 
@@ -28,7 +30,12 @@ def client(database_session: Session, monkeypatch: pytest.MonkeyPatch) -> Genera
 
 
 def authenticate(client: TestClient, database_session: Session, email: str):
-    user = register_user(database_session, RegisterRequest(email=email, password="valid-password", display_name="空间用户"))
+    user = register_user(
+        database_session,
+        RegisterRequest(
+            email=email, password="valid-password", display_name="空间用户"
+        ),
+    )
     client.cookies.set(settings.auth_cookie_name, create_access_token(user.id))
     return user
 
@@ -39,9 +46,13 @@ def test_spaces_require_authentication(client: TestClient):
     assert client.get(f"/api/v1/spaces/{uuid4()}").status_code == 401
 
 
-def test_create_list_and_get_current_user_space(client: TestClient, database_session: Session):
+def test_create_list_and_get_current_user_space(
+    client: TestClient, database_session: Session
+):
     authenticate(client, database_session, "spaces@example.com")
-    created = client.post("/api/v1/spaces", json={"name": " 企业知识库 Copilot ", "industry": "  "})
+    created = client.post(
+        "/api/v1/spaces", json={"name": " 企业知识库 Copilot ", "industry": "  "}
+    )
     assert created.status_code == 201
     payload = created.json()
     assert payload["name"] == "企业知识库 Copilot"
@@ -80,7 +91,9 @@ def test_current_user_cannot_read_another_users_space(
     }
 
 
-def test_space_detail_rejects_invalid_uuid(client: TestClient, database_session: Session):
+def test_space_detail_rejects_invalid_uuid(
+    client: TestClient, database_session: Session
+):
     authenticate(client, database_session, "uuid@example.com")
 
     response = client.get("/api/v1/spaces/not-a-uuid")
