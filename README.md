@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）、Task 4（用户登录与退出）、Task 5（当前用户与鉴权依赖）和 Task 6（产品空间 API）已经完成，下一步是 Task 7：前端 Next.js 骨架。
+V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）、Task 4（用户登录与退出）、Task 5（当前用户与鉴权依赖）、Task 6（产品空间 API）和 Task 7（前端 Next.js 骨架）已经完成，下一步是 Task 8：前端登录注册流程。
 
 已完成：
 
@@ -43,8 +43,10 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - 统一登录失败响应和幂等退出
 - `GET /api/v1/auth/me` 与可复用的当前用户鉴权依赖
 - 受鉴权保护的产品空间列表、创建、详情接口与默认知识库原子创建
+- Next.js App Router 静态骨架、首页、登录页、注册页与应用壳路由
+- 前端 API Client 基础层、环境变量示例、共享视觉组件与静态页面跳转
 
-Task 7 将创建前端 Next.js 骨架；产品空间、文档、RAG 与 Agent 的后续前端能力仍按任务拆分推进。
+Task 7 仅交付静态前端骨架：尚未实现真实登录、注册、`/app` 鉴权或空间列表；这些能力仍按后续任务拆分推进。
 
 ## 目录结构
 
@@ -86,7 +88,26 @@ cd services/api
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-启动后访问 `http://127.0.0.1:8000/api/v1/health`，预期返回 `{"status":"ok"}`。前端应用尚未创建。
+启动后访问 `http://127.0.0.1:8000/api/v1/health`，预期返回 `{"status":"ok"}`。
+
+### 前端启动与检查
+
+```powershell
+cd apps/web
+Copy-Item .env.example .env.local
+# 在 .env.local 中设置 NEXT_PUBLIC_API_BASE_URL，例如 http://127.0.0.1:8000/api/v1
+npm.cmd install
+npm.cmd run dev
+```
+
+前端静态骨架检查命令：
+
+```powershell
+npm.cmd run test
+npm.cmd run check:routes
+npm.cmd run lint
+npm.cmd run build
+```
 
 注册用户示例：
 
@@ -149,4 +170,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 7，不提前实现 RAG、Agent、文档上传、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 8（前端登录注册流程），不提前实现空间列表、文档上传、RAG、Agent、报告导出、团队协作或付费系统。
