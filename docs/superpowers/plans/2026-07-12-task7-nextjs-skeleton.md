@@ -363,4 +363,3 @@ git commit -m "docs: record Task 7 completion"
 - 设计覆盖：四个路由、静态跳转、shadcn/ui、环境变量、API Client、中文错误、Cookie 选项、视觉 tokens、范围排除、lint/build/浏览器验证均有对应任务。
 - TDD 覆盖：Task 2 先写 API Client 失败测试再实现；Task 3 先写路由存在性失败检查再补齐页面。静态视觉没有运行时业务逻辑，以 build 与浏览器烟雾作为行为验证。
 - 范围控制：没有认证请求、Cookie 读取、路由守卫、空间 CRUD、文档、RAG、Agent 或前端状态库。
-
