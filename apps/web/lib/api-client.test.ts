@@ -55,4 +55,21 @@ describe("apiRequest", () => {
       details: {},
     } satisfies Partial<ApiClientError>);
   });
+
+  it("maps a rejected network request to a generic ApiClientError", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://127.0.0.1:8000/api/v1");
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("connection refused"));
+
+    await expect(apiRequest("/health")).rejects.toMatchObject({
+      code: "NETWORK_ERROR",
+      message: "网络请求失败，请稍后重试",
+    } satisfies Partial<ApiClientError>);
+  });
+
+  it("returns undefined for a successful empty 204 response", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://127.0.0.1:8000/api/v1");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(apiRequest<void>("/auth/logout")).resolves.toBeUndefined();
+  });
 });

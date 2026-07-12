@@ -28,6 +28,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
       ...init,
       credentials: "include",
     });
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     const body = await parseJson(response);
 
     if (!response.ok) {
