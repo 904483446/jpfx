@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）、Task 4（用户登录与退出）、Task 5（当前用户与鉴权依赖）、Task 6（产品空间 API）和 Task 7（前端 Next.js 骨架）已经完成，下一步是 Task 8：前端登录注册流程。
+V0.1 Task 0（项目初始化与文档对齐）至 Task 8（前端认证流程）已经完成；当前已接入真实注册、真实登录和 `/app` 当前用户校验。下一步是 Task 9：产品空间列表与创建。
 
 已完成：
 
@@ -45,8 +45,10 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - 受鉴权保护的产品空间列表、创建、详情接口与默认知识库原子创建
 - Next.js App Router 静态骨架、首页、登录页、注册页与应用壳路由
 - 前端 API Client 基础层、环境变量示例、共享视觉组件与静态页面跳转
+- 前端真实注册、登录表单及对应错误反馈
+- `/app` 通过 `GET /api/v1/auth/me` 校验当前用户，并显示用户昵称与邮箱
 
-Task 7 仅交付静态前端骨架：尚未实现真实登录、注册、`/app` 鉴权或空间列表；这些能力仍按后续任务拆分推进。
+Task 8 只覆盖真实注册、登录和 `/app` 当前用户校验；产品空间列表与创建留待 Task 9 实现。
 
 ## 目录结构
 
@@ -100,11 +102,12 @@ npm.cmd install
 npm.cmd run dev
 ```
 
-前端静态骨架检查命令：
+前端检查命令：
 
 ```powershell
 npm.cmd run test
 npm.cmd run check:routes
+npm.cmd exec tsc -- --noEmit
 npm.cmd run lint
 npm.cmd run build
 ```
@@ -170,4 +173,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 8（前端登录注册流程），不提前实现空间列表、文档上传、RAG、Agent、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 9（产品空间列表与创建），不提前实现文档上传、RAG、Agent、报告导出、团队协作或付费系统。
