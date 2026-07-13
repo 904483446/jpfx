@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth";
 import { ApiClientError } from "@/lib/api-client";
@@ -11,10 +11,15 @@ export function AuthenticatedApp() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   const loadCurrentUser = useCallback(async () => {
+    const currentRequestVersion = ++requestVersion.current;
+
     try {
       const currentUser = await getCurrentUser();
+
+      if (currentRequestVersion !== requestVersion.current) return;
 
       if (!currentUser) {
         setError("网络请求失败，请稍后重试");
@@ -25,6 +30,8 @@ export function AuthenticatedApp() {
       setUser(currentUser);
       setStatus("ready");
     } catch (caughtError) {
+      if (currentRequestVersion !== requestVersion.current) return;
+
       if (caughtError instanceof ApiClientError && caughtError.code === "UNAUTHORIZED") {
         replace("/login");
         return;
@@ -36,7 +43,15 @@ export function AuthenticatedApp() {
   }, [replace]);
 
   useEffect(() => {
-    void Promise.resolve().then(loadCurrentUser);
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadCurrentUser();
+    });
+
+    return () => {
+      active = false;
+      requestVersion.current += 1;
+    };
   }, [loadCurrentUser]);
 
   const retry = () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiClientError } from "@/lib/api-client";
 
@@ -47,6 +47,50 @@ describe("AuthenticatedApp", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("网络请求失败，请稍后重试");
     expect(screen.getByRole("button", { name: "重试" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("卸载后忽略仍在进行的未授权请求", async () => {
+    let rejectRequest: (reason: Error) => void;
+    getCurrentUser.mockImplementationOnce(() => new Promise((_, reject) => { rejectRequest = reject; }));
+    const { unmount } = render(<AuthenticatedApp />);
+    await waitFor(() => expect(getCurrentUser).toHaveBeenCalledTimes(1));
+
+    unmount();
+    await act(async () => {
+      rejectRequest!(new ApiClientError("UNAUTHORIZED", "登录已失效"));
+      await Promise.resolve();
+    });
+
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("连续重试时忽略较早请求的晚到未授权结果", async () => {
+    let rejectEarlierRetry: (reason: Error) => void;
+    let resolveLatestRetry: (value: { id: string; email: string; display_name: string; is_admin: boolean; created_at: string; updated_at: string }) => void;
+    getCurrentUser
+      .mockRejectedValueOnce(new ApiClientError("NETWORK_ERROR", "网络请求失败，请稍后重试"))
+      .mockImplementationOnce(() => new Promise((_, reject) => { rejectEarlierRetry = reject; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveLatestRetry = resolve; }));
+    render(<AuthenticatedApp />);
+
+    const retry = await screen.findByRole("button", { name: "重试" });
+    await act(async () => {
+      retry.click();
+      retry.click();
+    });
+    await waitFor(() => expect(getCurrentUser).toHaveBeenCalledTimes(3));
+    await act(async () => {
+      resolveLatestRetry!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
+      await Promise.resolve();
+    });
+
+    expect(await screen.findByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
+    await act(async () => {
+      rejectEarlierRetry!(new ApiClientError("UNAUTHORIZED", "登录已失效"));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
 
