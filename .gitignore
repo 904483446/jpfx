@@ -1,5 +1,6 @@
 # Local environment
 .env
+apps/web/.env.local
 .worktrees/
 .venv/
 venv/
