@@ -17,7 +17,8 @@ export function AuthenticatedApp() {
       const currentUser = await getCurrentUser();
 
       if (!currentUser) {
-        replace("/login");
+        setError("网络请求失败，请稍后重试");
+        setStatus("error");
         return;
       }
 

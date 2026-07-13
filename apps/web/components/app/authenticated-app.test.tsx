@@ -41,6 +41,15 @@ describe("AuthenticatedApp", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("未返回当前用户时显示可重试错误且不跳转", async () => {
+    getCurrentUser.mockResolvedValueOnce(undefined);
+    render(<AuthenticatedApp />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("网络请求失败，请稍后重试");
+    expect(screen.getByRole("button", { name: "重试" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it("网络错误显示重试操作且不跳转", async () => {
     const user = userEvent.setup();
     getCurrentUser
