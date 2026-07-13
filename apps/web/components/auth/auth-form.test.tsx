@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const { replace, register, login } = vi.hoisted(() => ({
@@ -85,6 +85,24 @@ describe("AuthForm", () => {
     expect(register).toHaveBeenCalledTimes(1);
     resolveRequest();
     await waitFor(() => expect(submit).not.toBeDisabled());
+  });
+
+  it("submits only once for synchronous duplicate submit events", async () => {
+    const user = userEvent.setup();
+    let resolveRequest: () => void = () => undefined;
+    register.mockImplementationOnce(() => new Promise<void>((resolve) => { resolveRequest = resolve; }));
+    const { container } = render(<AuthForm mode="register" />);
+
+    await fillRegisterForm(user);
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    act(() => {
+      form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    expect(register).toHaveBeenCalledTimes(1);
+    resolveRequest();
   });
 
   it.each([

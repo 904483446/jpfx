@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { login, register } from "@/lib/auth";
 import { ApiClientError } from "@/lib/api-client";
@@ -25,16 +25,18 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLock = useRef(false);
   const isRegister = mode === "register";
   const errorId = "auth-form-error";
   const updateValue = (field: keyof FormValues, value: string) => setValues((current) => ({ ...current, [field]: value }));
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submissionLock.current) return;
     const validationMessage = validate(values, mode);
     if (validationMessage) { setError(validationMessage); return; }
     setError(null);
+    submissionLock.current = true;
     setIsSubmitting(true);
     try {
       if (isRegister) {
@@ -46,7 +48,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
     } catch (caughtError) {
       setError(caughtError instanceof ApiClientError ? caughtError.message : "网络请求失败，请稍后重试");
-    } finally { setIsSubmitting(false); }
+    } finally {
+      submissionLock.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return <form className="space-y-4" noValidate onSubmit={onSubmit}>
