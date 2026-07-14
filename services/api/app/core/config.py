@@ -20,6 +20,15 @@ class Settings(BaseSettings):
     access_token_expire_days: int = 7
     auth_cookie_name: str = "access_token"
     auth_cookie_secure: bool = False
+    cors_allowed_origins: str = "http://127.0.0.1:3000"
+
+    @property
+    def cors_allowed_origins_list(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.cors_allowed_origins.split(",")
+            if origin.strip()
+        ]
 
 
 settings = Settings()
