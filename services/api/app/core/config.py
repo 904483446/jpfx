@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
@@ -21,6 +22,16 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "access_token"
     auth_cookie_secure: bool = False
     cors_allowed_origins: str = "http://127.0.0.1:3000"
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def validate_cors_allowed_origins(cls, value: str) -> str:
+        origins = [origin.strip() for origin in value.split(",") if origin.strip()]
+        if not origins:
+            raise ValueError("CORS 允许来源不能为空")
+        if "*" in origins:
+            raise ValueError("CORS 凭据请求不允许通配符来源")
+        return value
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:
