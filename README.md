@@ -182,6 +182,12 @@ Invoke-RestMethod `
 
 登录功能要求本地 `.env` 配置足够长且随机的 `JWT_SECRET`。生产环境还必须设置 `AUTH_COOKIE_SECURE=true`，确保登录 Cookie 只通过 HTTPS 发送。
 
+### 本地登录 CORS 配置
+
+后端通过 `CORS_ALLOWED_ORIGINS` 控制允许携带登录 Cookie 的前端来源。它不是敏感信息；未设置时，本地开发默认允许 `http://127.0.0.1:3000`。如需同时使用多个本地前端地址，可用英文逗号分隔，例如 `http://127.0.0.1:3000,http://localhost:3000`。
+
+生产环境必须将该变量设置为实际部署的 HTTPS 前端 Origin（协议、域名和端口需与浏览器请求一致）。不得使用 `*`：携带 Cookie 的 CORS 请求不允许通配符来源，服务会拒绝此配置。
+
 用户自己的 DeepSeek API Key 未来会加密保存在数据库中，不作为平台环境变量写入代码仓库。
 
 ## 开发顺序
