@@ -23,9 +23,11 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架）、Task 2（数据库与迁移基础）、Task 3（用户注册）、Task 4（用户登录与退出）、Task 5（当前用户与鉴权依赖）、Task 6（产品空间 API）和 Task 7（前端 Next.js 骨架）已经完成，下一步是 Task 8：前端登录注册流程。
+V0.1 Task 0（项目初始化与文档对齐）至 Task 8（前端认证流程）已经完成；当前已接入真实注册、真实登录和 `/app` 当前用户校验。下一步是 Task 9：产品空间列表与创建。
 
 已完成：
+
+已有基础能力（在 Task 8 开始前已实现；其中后端 API 仅作参考）：
 
 - 核心文档与前后端目录入口
 - FastAPI 应用入口和 `/api/v1` 统一前缀
@@ -38,15 +40,17 @@ V0.1 Task 0（项目初始化与文档对齐）、Task 1（FastAPI 后端骨架�
 - `POST /api/v1/auth/register` 用户注册接口
 - 邮箱与昵称规范化、Argon2id 密码哈希及重复邮箱保护
 - 注册请求、服务层、数据库约束和 API 集成自动化测试
-- `POST /api/v1/auth/login` 和 `POST /api/v1/auth/logout`
+- 已有后端 API：`POST /api/v1/auth/login` 和 `POST /api/v1/auth/logout`
 - 7 天有效的 JWT httpOnly Cookie 登录态
 - 统一登录失败响应和幂等退出
 - `GET /api/v1/auth/me` 与可复用的当前用户鉴权依赖
 - 受鉴权保护的产品空间列表、创建、详情接口与默认知识库原子创建
 - Next.js App Router 静态骨架、首页、登录页、注册页与应用壳路由
 - 前端 API Client 基础层、环境变量示例、共享视觉组件与静态页面跳转
+- Task 8 前端：真实注册、登录表单及对应错误反馈
+- Task 8 前端：`/app` 通过 `GET /api/v1/auth/me` 校验当前用户，并显示用户昵称与邮箱
 
-Task 7 仅交付静态前端骨架：尚未实现真实登录、注册、`/app` 鉴权或空间列表；这些能力仍按后续任务拆分推进。
+Task 8 只覆盖真实注册、登录和 `/app` 当前用户校验；前端退出流程不在 Task 8 范围内，产品空间列表与创建留待 Task 9 实现。
 
 ## 目录结构
 
@@ -100,14 +104,35 @@ npm.cmd install
 npm.cmd run dev
 ```
 
-前端静态骨架检查命令：
+前端检查命令：
 
 ```powershell
 npm.cmd run test
 npm.cmd run check:routes
+npm.cmd exec tsc -- --noEmit
 npm.cmd run lint
 npm.cmd run build
 ```
+
+本次已实际执行并通过：`npm.cmd run test`（23/23 tests）、`npm.cmd run check:routes`、`npm.cmd exec tsc -- --noEmit`、`npm.cmd run lint`、`npm.cmd run build`，以及 `npm.cmd audit --omit=dev`（0 vulnerabilities）。
+
+### 浏览器烟雾验证
+
+本次未执行浏览器烟雾验证：本机端口 3000 和 8000 没有服务监听，且本任务按约束不读取根目录 `.env` 来启动后端，因此不能伪造注册、登录或会话验证结论。
+
+在用户已配置本地环境后，可分别执行以下命令：
+
+```powershell
+# 终端 1
+cd services/api
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+
+# 终端 2
+cd apps/web
+npm.cmd run dev
+```
+
+打开 `http://127.0.0.1:3000/register`，完成注册后登录；验收 `/app` 显示当前用户昵称和邮箱、刷新后仍能通过当前用户校验、无登录态访问 `/app` 跳转 `/login`。同时在浏览器网络面板确认该流程不发起 `/spaces` 请求，并在存储面板确认前端未写入 JWT。
 
 注册用户示例：
 
@@ -127,7 +152,7 @@ Invoke-RestMethod `
 
 成功时接口返回 HTTP 201 和用户公开字段，不返回密码或密码哈希。
 
-登录与退出示例：
+已有后端登录与退出 API 示例（非 Task 8 前端范围）：
 
 ```powershell
 $loginBody = @{
@@ -149,13 +174,19 @@ Invoke-RestMethod `
   -WebSession $session
 ```
 
-登录成功返回用户公开字段，并设置 7 天有效的 httpOnly Cookie；退出返回 HTTP 204 并清除该 Cookie。
+已有后端 API 的登录成功响应会设置 7 天有效的 httpOnly Cookie；已有后端退出 API 返回 HTTP 204 并清除该 Cookie。前端退出流程不在 Task 8 范围内。
 
 ## 环境变量
 
 请参考 `.env.example` 创建本地 `.env`。不要把 `.env`、真实 API Key、数据库密码、JWT 密钥或加密密钥提交到仓库。
 
 登录功能要求本地 `.env` 配置足够长且随机的 `JWT_SECRET`。生产环境还必须设置 `AUTH_COOKIE_SECURE=true`，确保登录 Cookie 只通过 HTTPS 发送。
+
+### 本地登录 CORS 配置
+
+后端通过 `CORS_ALLOWED_ORIGINS` 控制允许携带登录 Cookie 的前端来源。它不是敏感信息；未设置时，本地开发默认允许 `http://127.0.0.1:3000`。如需同时使用多个本地前端地址，可用英文逗号分隔，例如 `http://127.0.0.1:3000,http://localhost:3000`。
+
+生产环境必须将该变量设置为实际部署的 HTTPS 前端 Origin（协议、域名和端口需与浏览器请求一致）。不得使用 `*`：携带 Cookie 的 CORS 请求不允许通配符来源，服务会拒绝此配置。
 
 用户自己的 DeepSeek API Key 未来会加密保存在数据库中，不作为平台环境变量写入代码仓库。
 
@@ -170,4 +201,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-下一任务只执行 V0.1 Task 8（前端登录注册流程），不提前实现空间列表、文档上传、RAG、Agent、报告导出、团队协作或付费系统。
+下一任务只执行 V0.1 Task 9（产品空间列表与创建），不提前实现文档上传、RAG、Agent、报告导出、团队协作或付费系统。
