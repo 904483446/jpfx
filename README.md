@@ -23,7 +23,7 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）至 Task 9（Dashboard 产品空间列表与创建）已经完成；当前已接入真实注册、真实登录、`/app` 当前用户校验、空间列表和弹窗创建。
+V0.1 Task 0（项目初始化与文档对齐）至 Task 10（文档与验证收尾）已经完成；当前已接入真实注册、真实登录、`/app` 当前用户校验、空间列表和弹窗创建。
 
 已完成：
 
@@ -51,8 +51,9 @@ V0.1 Task 0（项目初始化与文档对齐）至 Task 9（Dashboard 产品空�
 - Task 8 前端：`/app` 通过 `GET /api/v1/auth/me` 校验当前用户，并显示用户昵称与邮箱
 - Task 9 前端：`/app` 展示当前用户自己的产品空间列表，支持加载、空列表和错误重试状态
 - Task 9 前端：以弹窗创建名称必填、行业/产品方向/描述选填的产品空间；成功后进入空间详情占位页
+- Task 10：收敛非敏感环境变量示例、更新项目状态说明，并完成前后端自动化验证记录
 
-Task 8 只覆盖真实注册、登录和 `/app` 当前用户校验；前端退出流程不在 Task 8 范围内，产品空间列表与创建留待 Task 9 实现。
+空间详情页当前仅为占位页，不加载空间详情数据。后端已有 `POST /api/v1/auth/logout` 和创建空间时原子创建默认知识库的能力；前端退出流程和默认知识库展示均未实现，且 Task 10 不新增这些功能。
 
 ## 目录结构
 
@@ -100,9 +101,8 @@ cd services/api
 
 ```powershell
 cd apps/web
-Copy-Item .env.example .env.local
-# 在 .env.local 中设置 NEXT_PUBLIC_API_BASE_URL，例如 http://127.0.0.1:8000/api/v1
-npm.cmd install
+# 创建 apps/web/.env.local，并仅设置 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+npm.cmd ci
 npm.cmd run dev
 ```
 
@@ -116,11 +116,11 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-本次已实际执行并通过：`npm.cmd run test`（23/23 tests）、`npm.cmd run check:routes`、`npm.cmd exec tsc -- --noEmit`、`npm.cmd run lint`、`npm.cmd run build`，以及 `npm.cmd audit --omit=dev`（0 vulnerabilities）。
+Task 10 已实际执行并通过：`npm.cmd run test`（7 个测试文件、32/32 tests）、`npm.cmd run check:routes`、`npm.cmd exec tsc -- --noEmit`、`npm.cmd run lint`、`npm.cmd run build`，以及 `npm.cmd audit --omit=dev`（0 vulnerabilities）。后端 `ruff check`、`ruff format --check` 与 `pytest` 也已通过，其中 Pytest 为 100/100。
 
 ### 浏览器烟雾验证
 
-本次未执行浏览器烟雾验证：本机端口 3000 和 8000 没有服务监听，且本任务按约束不读取根目录 `.env` 来启动后端，因此不能伪造注册、登录或会话验证结论。
+Task 10 未重跑浏览器烟雾验证；浏览器联调只在本地前后端服务已由用户配置并启动时执行。自动化测试不能替代真实 Cookie 会话与凭据型 CORS 的浏览器验证。
 
 在用户已配置本地环境后，可分别执行以下命令：
 
@@ -203,4 +203,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-空间详情页当前仅为占位页，不加载空间详情数据。编辑删除、文档上传、知识库、RAG、竞品分析、报告导出、团队协作和付费系统仍未实现，后续任务不得提前进入 V0.2+ 范围。
+V0.2 从空间内文档上传、文档列表和文档状态管理开始。空间详情数据加载、空间编辑删除、前端退出登录、默认知识库展示、RAG、竞品分析、报告导出、团队协作和付费系统仍未实现，后续任务不得提前进入 V0.2+ 范围。
