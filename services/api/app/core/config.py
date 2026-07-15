@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "access_token"
     auth_cookie_secure: bool = False
     cors_allowed_origins: str = "http://127.0.0.1:3000"
+    document_storage_root: Path = Path(__file__).resolve().parents[2] / "storage"
 
     @field_validator("cors_allowed_origins")
     @classmethod

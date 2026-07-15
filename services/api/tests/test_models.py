@@ -21,7 +21,7 @@ def unique_column_sets(table) -> set[tuple[str, ...]]:
 def test_base_models_define_required_tables_and_columns():
     tables = load_model_tables()
 
-    assert set(tables) == {"users", "spaces", "knowledge_bases"}
+    assert set(tables) == {"users", "spaces", "knowledge_bases", "documents"}
     assert set(tables["users"].columns.keys()) == {
         "id",
         "email",
@@ -48,6 +48,20 @@ def test_base_models_define_required_tables_and_columns():
         "space_id",
         "name",
         "description",
+        "created_at",
+        "updated_at",
+    }
+    assert set(tables["documents"].columns.keys()) == {
+        "id",
+        "user_id",
+        "space_id",
+        "knowledge_base_id",
+        "filename",
+        "file_type",
+        "file_size",
+        "storage_path",
+        "status",
+        "error_message",
         "created_at",
         "updated_at",
     }
@@ -102,3 +116,29 @@ def test_knowledge_base_constraints_enforce_one_owner_and_one_per_space():
     )
     assert user_foreign_key.target_fullname == "users.id"
     assert user_foreign_key.ondelete == "CASCADE"
+
+
+def test_document_constraints_keep_document_with_its_owner_space_and_knowledge_base():
+    documents = load_model_tables()["documents"]
+
+    composite_foreign_keys = {
+        (
+            tuple(constraint.column_keys),
+            tuple(element.target_fullname for element in constraint.elements),
+        )
+        for constraint in documents.constraints
+        if isinstance(constraint, ForeignKeyConstraint)
+    }
+    assert (
+        ("space_id", "user_id"),
+        ("spaces.id", "spaces.user_id"),
+    ) in composite_foreign_keys
+    assert (
+        ("knowledge_base_id", "space_id", "user_id"),
+        (
+            "knowledge_bases.id",
+            "knowledge_bases.space_id",
+            "knowledge_bases.user_id",
+        ),
+    ) in composite_foreign_keys
+    assert documents.c.status.default.arg == "uploaded"
