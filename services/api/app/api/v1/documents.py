@@ -10,7 +10,7 @@ from app.db.session import get_db_session
 from app.models import User
 from app.schemas.document import DocumentResponse
 from app.services.document_service import (
-    create_document,
+    create_uploaded_document,
     delete_document,
     list_documents,
 )
@@ -31,12 +31,12 @@ async def upload_document(
     current_user: Annotated[User, Depends(get_current_user)],
     database_session: Annotated[Session, Depends(get_db_session)],
 ) -> DocumentResponse:
-    document = create_document(
+    document = await create_uploaded_document(
         database_session,
         current_user,
         space_id,
         file.filename or "",
-        await file.read(),
+        file,
         LocalDocumentStorage(settings.document_storage_root),
     )
     return DocumentResponse.model_validate(document)

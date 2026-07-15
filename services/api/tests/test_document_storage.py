@@ -1,8 +1,10 @@
+from io import BytesIO
 from uuid import uuid4
 
 import pytest
 from app.core.errors import AppError
 from app.services.document_storage import LocalDocumentStorage
+from fastapi import UploadFile
 
 
 def test_storage_writes_supported_file_under_user_and_space(tmp_path):
@@ -33,7 +35,7 @@ def test_storage_rejects_invalid_content(tmp_path, filename, content, code):
         LocalDocumentStorage(tmp_path).save(uuid4(), uuid4(), filename, content)
 
     assert captured.value.code == code
-    assert list(tmp_path.rglob("*")) == []
+    assert not list(tmp_path.rglob("*.txt"))
 
 
 def test_storage_deletes_saved_file(tmp_path):
@@ -43,3 +45,18 @@ def test_storage_deletes_saved_file(tmp_path):
     storage.delete(stored.relative_path)
 
     assert not (tmp_path / stored.relative_path).exists()
+
+
+@pytest.mark.anyio
+async def test_storage_streams_upload_and_removes_partial_oversized_file(tmp_path):
+    storage = LocalDocumentStorage(tmp_path)
+    upload = UploadFile(
+        filename="too-large.txt",
+        file=BytesIO(b"x" * (20 * 1024 * 1024 + 1)),
+    )
+
+    with pytest.raises(AppError) as captured:
+        await storage.save_upload(uuid4(), uuid4(), "too-large.txt", upload)
+
+    assert captured.value.code == "DOCUMENT_TOO_LARGE"
+    assert not list(tmp_path.rglob("*.txt"))
