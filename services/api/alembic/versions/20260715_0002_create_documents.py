@@ -18,6 +18,11 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    op.create_unique_constraint(
+        "uq_knowledge_bases_id_space_id_user_id",
+        "knowledge_bases",
+        ["id", "space_id", "user_id"],
+    )
     op.create_table(
         "documents",
         sa.Column(
@@ -88,3 +93,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_documents_user_id_space_id_created_at", table_name="documents")
     op.drop_table("documents")
+    op.drop_constraint(
+        "uq_knowledge_bases_id_space_id_user_id",
+        "knowledge_bases",
+        type_="unique",
+    )

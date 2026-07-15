@@ -24,6 +24,12 @@ class KnowledgeBase(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             ondelete="CASCADE",
         ),
         UniqueConstraint("space_id", name="uq_knowledge_bases_space_id"),
+        UniqueConstraint(
+            "id",
+            "space_id",
+            "user_id",
+            name="uq_knowledge_bases_id_space_id_user_id",
+        ),
         Index("ix_knowledge_bases_user_id", "user_id"),
     )
 

@@ -116,6 +116,7 @@ def test_knowledge_base_constraints_enforce_one_owner_and_one_per_space():
     )
     assert user_foreign_key.target_fullname == "users.id"
     assert user_foreign_key.ondelete == "CASCADE"
+    assert ("id", "space_id", "user_id") in unique_column_sets(knowledge_bases)
 
 
 def test_document_constraints_keep_document_with_its_owner_space_and_knowledge_base():
