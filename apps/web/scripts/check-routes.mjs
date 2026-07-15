@@ -5,6 +5,7 @@ for (const routeFile of [
   "app/login/page.tsx",
   "app/register/page.tsx",
   "app/app/page.tsx",
+  "app/app/spaces/[spaceId]/page.tsx",
 ]) {
   await access(new URL(`../${routeFile}`, import.meta.url));
 }

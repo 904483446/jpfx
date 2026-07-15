@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DashboardSpaces } from "@/components/app/dashboard-spaces";
+import { Button } from "@/components/ui/button";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth";
 import { ApiClientError } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
 
 export function AuthenticatedApp() {
   const { replace } = useRouter();
@@ -15,28 +16,22 @@ export function AuthenticatedApp() {
 
   const loadCurrentUser = useCallback(async () => {
     const currentRequestVersion = ++requestVersion.current;
-
     try {
       const currentUser = await getCurrentUser();
-
       if (currentRequestVersion !== requestVersion.current) return;
-
       if (!currentUser) {
         setError("网络请求失败，请稍后重试");
         setStatus("error");
         return;
       }
-
       setUser(currentUser);
       setStatus("ready");
     } catch (caughtError) {
       if (currentRequestVersion !== requestVersion.current) return;
-
       if (caughtError instanceof ApiClientError && caughtError.code === "UNAUTHORIZED") {
         replace("/login");
         return;
       }
-
       setError(caughtError instanceof ApiClientError ? caughtError.message : "网络请求失败，请稍后重试");
       setStatus("error");
     }
@@ -44,14 +39,8 @@ export function AuthenticatedApp() {
 
   useEffect(() => {
     let active = true;
-    void Promise.resolve().then(() => {
-      if (active) return loadCurrentUser();
-    });
-
-    return () => {
-      active = false;
-      requestVersion.current += 1;
-    };
+    void Promise.resolve().then(() => { if (active) return loadCurrentUser(); });
+    return () => { active = false; requestVersion.current += 1; };
   }, [loadCurrentUser]);
 
   const retry = () => {
@@ -60,13 +49,7 @@ export function AuthenticatedApp() {
     void loadCurrentUser();
   };
 
-  if (status === "loading") {
-    return <p className="text-sm text-slate-500">正在验证登录状态…</p>;
-  }
-
-  if (status === "error") {
-    return <div className="space-y-4"><p className="text-sm text-red-600" role="alert">{error}</p><Button onClick={retry} type="button">重试</Button></div>;
-  }
-
-  return <div className="max-w-3xl"><p className="text-sm font-medium text-[#14b8a6]">工作台</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">欢迎回来，{user!.display_name}</h1><p className="mt-2 text-sm text-slate-500">{user!.email}</p><div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">Task 9 将在这里展示你的空间列表。</div></div>;
+  if (status === "loading") return <p className="text-sm text-slate-500">正在验证登录状态…</p>;
+  if (status === "error") return <div className="space-y-4"><p className="text-sm text-red-600" role="alert">{error}</p><Button onClick={retry} type="button">重试</Button></div>;
+  return <DashboardSpaces user={user!} />;
 }
