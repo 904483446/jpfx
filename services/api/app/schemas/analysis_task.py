@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -10,7 +11,7 @@ class AnalysisTaskCreateRequest(BaseModel):
     product_direction: str = Field(min_length=1, max_length=255)
     keywords: list[str] = Field(default_factory=list, max_length=20)
     known_competitors: list[str] = Field(default_factory=list, max_length=3)
-    discovery_mode: str = "semi_auto"
+    discovery_mode: Literal["manual", "semi_auto", "auto"] = "semi_auto"
 
     @field_validator("title", "industry", "product_direction")
     @classmethod
@@ -37,6 +38,10 @@ class CandidateResponse(BaseModel):
     sort_order: int | None
 
 
+class CompetitorSelectionRequest(BaseModel):
+    candidate_ids: list[UUID] = Field(min_length=1, max_length=3)
+
+
 class AnalysisTaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -51,3 +56,5 @@ class AnalysisTaskResponse(BaseModel):
     status: str
     stage: str | None
     completed_at: datetime | None
+    final_competitors: list[str]
+    candidates: list[CandidateResponse] = Field(default_factory=list)

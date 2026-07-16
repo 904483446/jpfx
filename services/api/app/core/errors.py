@@ -42,6 +42,30 @@ def space_not_found() -> AppError:
     )
 
 
+def analysis_task_not_found() -> AppError:
+    return AppError(
+        status_code=404,
+        code="ANALYSIS_TASK_NOT_FOUND",
+        message="分析任务不存在",
+    )
+
+
+def invalid_task_state() -> AppError:
+    return AppError(
+        status_code=409,
+        code="INVALID_TASK_STATE",
+        message="当前任务状态不支持此操作",
+    )
+
+
+def invalid_competitor_selection() -> AppError:
+    return AppError(
+        status_code=422,
+        code="INVALID_COMPETITOR_SELECTION",
+        message="请选择当前任务中的 1 至 3 个候选竞品",
+    )
+
+
 def document_not_found() -> AppError:
     return AppError(status_code=404, code="DOCUMENT_NOT_FOUND", message="文档不存在")
 
