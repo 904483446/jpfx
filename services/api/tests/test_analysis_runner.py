@@ -12,6 +12,7 @@ from app.models import (
 )
 from app.services.analysis_runner import ReportContent, run_analysis_task
 from app.services.retrieval_service import RetrievalResult
+from sqlalchemy.orm import sessionmaker
 
 
 class FakeDeepSeekProvider:
@@ -97,6 +98,14 @@ def _create_owner_and_space(database_session):
     return user, space
 
 
+def _background_session_factory(database_session):
+    return sessionmaker(
+        bind=database_session.connection(),
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+    )
+
+
 def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_evidence(
     database_session, monkeypatch
 ):
@@ -120,12 +129,14 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
 
     run_analysis_task(
         task.id,
-        session_factory=lambda: database_session,
+        session_factory=_background_session_factory(database_session),
         embedding_provider=object(),
         provider_factory=lambda _key: provider,
     )
 
-    database_session.refresh(task)
+    database_session.expire_all()
+    task = database_session.get(AnalysisTask, task.id)
+    assert task is not None
     report = database_session.query(CompetitorReport).filter_by(task_id=task.id).one()
     evidence = database_session.query(TaskEvidence).filter_by(task_id=task.id).all()
     assert task.status == "completed"
@@ -154,9 +165,14 @@ def test_analysis_runner_persists_safe_failure_before_reraising_app_error(
     )
 
     with pytest.raises(AppError) as captured:
-        run_analysis_task(task.id, session_factory=lambda: database_session)
+        run_analysis_task(
+            task.id,
+            session_factory=_background_session_factory(database_session),
+        )
 
-    database_session.refresh(task)
+    database_session.expire_all()
+    task = database_session.get(AnalysisTask, task.id)
+    assert task is not None
     assert captured.value.code == "DEEPSEEK_NOT_CONFIGURED"
     assert task.status == "failed"
     assert task.error_message == "分析任务失败，请检查模型配置或稍后重试"
