@@ -122,6 +122,22 @@ def deepseek_not_configured() -> AppError:
     )
 
 
+def search_not_configured() -> AppError:
+    return AppError(
+        status_code=409,
+        code="SEARCH_NOT_CONFIGURED",
+        message="未配置 Bocha Search API Key",
+    )
+
+
+def search_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="SEARCH_PROVIDER_ERROR",
+        message="公开网页搜索服务暂时不可用",
+    )
+
+
 def error_response(
     *,
     status_code: int,
