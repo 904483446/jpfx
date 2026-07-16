@@ -21,7 +21,13 @@ def unique_column_sets(table) -> set[tuple[str, ...]]:
 def test_base_models_define_required_tables_and_columns():
     tables = load_model_tables()
 
-    assert set(tables) == {"users", "spaces", "knowledge_bases", "documents"}
+    assert set(tables) == {
+        "users",
+        "spaces",
+        "knowledge_bases",
+        "documents",
+        "document_chunks",
+    }
     assert set(tables["users"].columns.keys()) == {
         "id",
         "email",
@@ -62,6 +68,19 @@ def test_base_models_define_required_tables_and_columns():
         "storage_path",
         "status",
         "error_message",
+        "created_at",
+        "updated_at",
+    }
+    assert set(tables["document_chunks"].columns.keys()) == {
+        "id",
+        "user_id",
+        "space_id",
+        "knowledge_base_id",
+        "document_id",
+        "chunk_index",
+        "content",
+        "embedding",
+        "metadata",
         "created_at",
         "updated_at",
     }
@@ -143,3 +162,39 @@ def test_document_constraints_keep_document_with_its_owner_space_and_knowledge_b
         ),
     ) in composite_foreign_keys
     assert documents.c.status.default.arg == "uploaded"
+
+
+def test_document_chunks_are_bound_to_their_owner_document_and_knowledge_base():
+    document_chunks = load_model_tables()["document_chunks"]
+
+    assert ("document_id", "chunk_index") in unique_column_sets(document_chunks)
+    assert str(document_chunks.c.embedding.type).lower() == "vector(1024)"
+    composite_foreign_keys = {
+        (
+            tuple(constraint.column_keys),
+            tuple(element.target_fullname for element in constraint.elements),
+        )
+        for constraint in document_chunks.constraints
+        if isinstance(constraint, ForeignKeyConstraint)
+    }
+    assert (
+        ("space_id", "user_id"),
+        ("spaces.id", "spaces.user_id"),
+    ) in composite_foreign_keys
+    assert (
+        ("knowledge_base_id", "space_id", "user_id"),
+        (
+            "knowledge_bases.id",
+            "knowledge_bases.space_id",
+            "knowledge_bases.user_id",
+        ),
+    ) in composite_foreign_keys
+    assert (
+        ("document_id", "space_id", "user_id", "knowledge_base_id"),
+        (
+            "documents.id",
+            "documents.space_id",
+            "documents.user_id",
+            "documents.knowledge_base_id",
+        ),
+    ) in composite_foreign_keys

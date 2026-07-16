@@ -23,10 +23,28 @@ def test_initial_migration_round_trip_on_empty_test_database():
     engine = create_engine(database_url)
     try:
         inspector = inspect(engine)
-        assert {"users", "spaces", "knowledge_bases", "documents"}.issubset(
-            inspector.get_table_names()
-        )
+        assert {
+            "users",
+            "spaces",
+            "knowledge_bases",
+            "documents",
+            "document_chunks",
+        }.issubset(inspector.get_table_names())
+        unique_constraints = inspector.get_unique_constraints("document_chunks")
+        assert frozenset({"document_id", "chunk_index"}) in {
+            frozenset(constraint["column_names"]) for constraint in unique_constraints
+        }
         with engine.connect() as connection:
+            embedding_type = connection.scalar(
+                text(
+                    "SELECT format_type(a.atttypid, a.atttypmod) "
+                    "FROM pg_attribute a "
+                    "JOIN pg_class c ON c.oid = a.attrelid "
+                    "WHERE c.relname = 'document_chunks' "
+                    "AND a.attname = 'embedding'"
+                )
+            )
+            assert embedding_type == "vector(1024)"
             extensions = set(
                 connection.execute(
                     text(
@@ -38,9 +56,13 @@ def test_initial_migration_round_trip_on_empty_test_database():
         assert extensions == {"uuid-ossp", "vector"}
 
         command.downgrade(configuration, "base")
-        assert not {"users", "spaces", "knowledge_bases", "documents"}.intersection(
-            inspect(engine).get_table_names()
-        )
+        assert not {
+            "users",
+            "spaces",
+            "knowledge_bases",
+            "documents",
+            "document_chunks",
+        }.intersection(inspect(engine).get_table_names())
         with engine.connect() as connection:
             retained_extensions = set(
                 connection.execute(

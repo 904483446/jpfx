@@ -37,3 +37,25 @@ def test_session_factory_connects_to_test_database():
             assert database_session.execute(text("SELECT 1")).scalar_one() == 1
     finally:
         engine.dispose()
+
+
+def test_engine_registers_pgvector_adapter_for_psycopg_connections(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    session_module = importlib.import_module("app.db.session")
+    test_database_url = Settings().test_database_url
+    assert test_database_url is not None
+    registered_connections = []
+    monkeypatch.setattr(
+        session_module,
+        "register_vector",
+        lambda connection: registered_connections.append(connection),
+    )
+    session_module.get_engine.cache_clear()
+    try:
+        with session_module.get_engine(test_database_url).connect() as connection:
+            connection.execute(text("SELECT 1"))
+    finally:
+        session_module.get_engine.cache_clear()
+
+    assert len(registered_connections) == 1

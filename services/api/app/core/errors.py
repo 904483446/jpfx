@@ -46,6 +46,14 @@ def document_not_found() -> AppError:
     return AppError(status_code=404, code="DOCUMENT_NOT_FOUND", message="文档不存在")
 
 
+def document_not_indexable() -> AppError:
+    return AppError(
+        status_code=409,
+        code="DOCUMENT_NOT_INDEXABLE",
+        message="当前文档状态不支持开始索引",
+    )
+
+
 def document_type_not_supported() -> AppError:
     return AppError(
         status_code=400,
@@ -64,6 +72,30 @@ def document_too_large() -> AppError:
 
 def document_empty() -> AppError:
     return AppError(status_code=400, code="DOCUMENT_EMPTY", message="文档不能为空")
+
+
+def document_content_not_extractable() -> AppError:
+    return AppError(
+        status_code=400,
+        code="DOCUMENT_CONTENT_NOT_EXTRACTABLE",
+        message="文档未提取到可索引的正文",
+    )
+
+
+def embedding_not_configured() -> AppError:
+    return AppError(
+        status_code=500,
+        code="EMBEDDING_NOT_CONFIGURED",
+        message="未配置 DashScope API Key，无法生成文档向量",
+    )
+
+
+def embedding_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="EMBEDDING_PROVIDER_ERROR",
+        message="文档向量生成服务暂时不可用",
+    )
 
 
 def error_response(
