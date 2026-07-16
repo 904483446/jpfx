@@ -114,6 +114,14 @@ def model_config_decryption_failed() -> AppError:
     )
 
 
+def deepseek_not_configured() -> AppError:
+    return AppError(
+        status_code=409,
+        code="DEEPSEEK_NOT_CONFIGURED",
+        message="未配置 DeepSeek API Key",
+    )
+
+
 def error_response(
     *,
     status_code: int,
