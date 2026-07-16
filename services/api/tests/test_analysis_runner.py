@@ -6,11 +6,14 @@ from app.models import (
     AnalysisTask,
     CompetitorCandidate,
     CompetitorReport,
+    Document,
+    DocumentChunk,
+    KnowledgeBase,
     Space,
     TaskEvidence,
     User,
 )
-from app.services.analysis_runner import ReportContent, run_analysis_task
+from app.services.analysis_runner import run_analysis_task
 from app.services.retrieval_service import RetrievalResult
 from sqlalchemy.orm import sessionmaker
 
@@ -38,7 +41,7 @@ class FakeDeepSeekProvider:
                 }
             ],
             "executive_summary": "A concise Chinese analysis.",
-            "information_sources": ["https://example.com/competitor-a", "brief.txt"],
+            "information_sources": ["https://untrusted.example.invalid"],
         }
 
 
@@ -106,11 +109,45 @@ def _background_session_factory(database_session):
     )
 
 
+def _create_indexed_private_context(database_session, user, space):
+    knowledge_base = KnowledgeBase(
+        user_id=user.id, space_id=space.id, name="Private knowledge"
+    )
+    database_session.add(knowledge_base)
+    database_session.flush()
+    document = Document(
+        user_id=user.id,
+        space_id=space.id,
+        knowledge_base_id=knowledge_base.id,
+        filename="brief.txt",
+        file_type="txt",
+        file_size=10,
+        storage_path="analysis-runner/brief.txt",
+        status="indexed",
+    )
+    database_session.add(document)
+    database_session.flush()
+    chunk = DocumentChunk(
+        user_id=user.id,
+        space_id=space.id,
+        knowledge_base_id=knowledge_base.id,
+        document_id=document.id,
+        chunk_index=0,
+        content="Private indexed context",
+        embedding=[1.0] + [0.0] * 1023,
+        metadata_={},
+    )
+    database_session.add(chunk)
+    database_session.commit()
+    return document, chunk
+
+
 def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_evidence(
     database_session, monkeypatch
 ):
     user, space = _create_owner_and_space(database_session)
     task = _create_queued_task(database_session, user, space)
+    document, chunk = _create_indexed_private_context(database_session, user, space)
     provider = FakeDeepSeekProvider()
     monkeypatch.setattr(
         "app.services.analysis_runner.get_deepseek_api_key", lambda *_: "test-key"
@@ -119,6 +156,9 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
         "app.services.analysis_runner.search_documents",
         lambda *_args, **_kwargs: [
             RetrievalResult(
+                document_id=document.id,
+                chunk_id=chunk.id,
+                knowledge_base_id=chunk.knowledge_base_id,
                 content="Private indexed context",
                 filename="brief.txt",
                 chunk_index=0,
@@ -141,10 +181,17 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
     evidence = database_session.query(TaskEvidence).filter_by(task_id=task.id).all()
     assert task.status == "completed"
     assert task.completed_at is not None
-    assert report.structured_json == ReportContent.model_validate(
-        provider.complete_json("", "")
-    ).model_dump(mode="json")
-    assert {item.source_type for item in evidence} == {"web", "private_knowledge"}
+    assert "information_sources" not in report.structured_json
+    assert {
+        (item["id"], item["source_type"]) for item in report.structured_json["evidence"]
+    } == {(str(item.id), item.source_type) for item in evidence}
+    private_evidence = next(
+        item for item in evidence if item.source_type == "private_knowledge"
+    )
+    assert private_evidence.document_id == document.id
+    assert private_evidence.chunk_id == chunk.id
+    assert private_evidence.knowledge_base_id == chunk.knowledge_base_id
+    assert private_evidence.quote == "Private indexed context"
     assert provider.prompts
 
 

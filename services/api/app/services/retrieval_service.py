@@ -19,6 +19,9 @@ class EmbeddingProvider(Protocol):
 
 @dataclass(frozen=True)
 class RetrievalResult:
+    document_id: UUID
+    chunk_id: UUID
+    knowledge_base_id: UUID
     content: str
     filename: str
     chunk_index: int
@@ -124,6 +127,9 @@ def search_documents(
     similarity = (1 - distance).label("similarity")
     statement = (
         select(
+            Document.id.label("document_id"),
+            DocumentChunk.id.label("chunk_id"),
+            DocumentChunk.knowledge_base_id,
             DocumentChunk.content,
             Document.filename,
             DocumentChunk.chunk_index,
@@ -142,6 +148,9 @@ def search_documents(
     )
     return [
         RetrievalResult(
+            document_id=row.document_id,
+            chunk_id=row.chunk_id,
+            knowledge_base_id=row.knowledge_base_id,
             content=row.content,
             filename=row.filename,
             chunk_index=row.chunk_index,

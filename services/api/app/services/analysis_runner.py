@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import Literal, Protocol
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -20,7 +20,11 @@ from app.models import (
 from app.services.deepseek_provider import DeepSeekProvider
 from app.services.embedding_provider import DashScopeEmbeddingProvider
 from app.services.key_cipher import KeyCipher
-from app.services.retrieval_service import EmbeddingProvider, search_documents
+from app.services.retrieval_service import (
+    EmbeddingProvider,
+    RetrievalResult,
+    search_documents,
+)
 
 
 class ReportCompetitor(BaseModel):
@@ -37,10 +41,18 @@ class ReportCompetitor(BaseModel):
     risks: list[str]
 
 
-class ReportContent(BaseModel):
+class ModelReportContent(BaseModel):
     competitors: list[ReportCompetitor] = Field(min_length=1, max_length=3)
     executive_summary: str
-    information_sources: list[str]
+
+
+class EvidenceReference(BaseModel):
+    id: UUID
+    source_type: Literal["web", "private_knowledge"]
+
+
+class ReportContent(ModelReportContent):
+    evidence: list[EvidenceReference]
 
 
 class JsonCompletionProvider(Protocol):
@@ -125,21 +137,31 @@ def _execute_analysis_task(
                 .order_by(CompetitorCandidate.sort_order)
             )
         )
-        web_evidence = list(
+        evidence = list(
             database_session.scalars(
-                select(TaskEvidence).where(
+                select(TaskEvidence)
+                .where(
                     TaskEvidence.task_id == task.id,
                     TaskEvidence.user_id == owner.id,
                     TaskEvidence.space_id == task.space_id,
-                    TaskEvidence.source_type == "web",
+                    TaskEvidence.source_type.in_(("web", "private_knowledge")),
                 )
+                .order_by(TaskEvidence.created_at, TaskEvidence.id)
             )
         )
-        content = ReportContent.model_validate(
+        web_evidence = [item for item in evidence if item.source_type == "web"]
+        model_content = ModelReportContent.model_validate(
             provider_factory(api_key).complete_json(
                 _system_prompt(),
                 _user_prompt(task, selected_competitors, private_context, web_evidence),
             )
+        )
+        content = ReportContent(
+            **model_content.model_dump(),
+            evidence=[
+                EvidenceReference(id=item.id, source_type=item.source_type)
+                for item in evidence
+            ],
         )
         database_session.add(
             CompetitorReport(
@@ -163,7 +185,7 @@ def _execute_analysis_task(
 
 
 def _persist_private_evidence(
-    database_session: Session, task: AnalysisTask, results: list[object]
+    database_session: Session, task: AnalysisTask, results: list[RetrievalResult]
 ) -> None:
     for result in results:
         database_session.add(
@@ -173,6 +195,9 @@ def _persist_private_evidence(
                 task_id=task.id,
                 source_type="private_knowledge",
                 source_title=f"私有知识库：{result.filename}",
+                document_id=result.document_id,
+                chunk_id=result.chunk_id,
+                knowledge_base_id=result.knowledge_base_id,
                 quote=result.content,
                 retrieved_at=datetime.now(UTC),
             )
@@ -200,7 +225,7 @@ def _system_prompt() -> str:
 def _user_prompt(
     task: AnalysisTask,
     competitors: list[CompetitorCandidate],
-    private_context: list[object],
+    private_context: list[RetrievalResult],
     web_evidence: list[TaskEvidence],
 ) -> str:
     competitor_names = [competitor.name for competitor in competitors]
@@ -223,5 +248,5 @@ def _user_prompt(
         f"最终竞品：{competitor_names}\n"
         f"网页证据：{web_sources}\n"
         f"私有知识库证据：{private_sources}\n"
-        "输出 competitors、executive_summary 和 information_sources 字段。"
+        "输出 competitors 和 executive_summary 字段。"
     )
