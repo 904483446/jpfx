@@ -34,7 +34,12 @@ def upgrade() -> None:
     )
     op.create_table(
         "document_chunks",
-        sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("uuid_generate_v4()"), nullable=False),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            server_default=sa.text("uuid_generate_v4()"),
+            nullable=False,
+        ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("space_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("knowledge_base_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -42,22 +47,80 @@ def upgrade() -> None:
         sa.Column("chunk_index", sa.Integer(), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("embedding", Vector(), nullable=False),
-        sa.Column("metadata", postgresql.JSONB(), server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], name="fk_document_chunks_user_id_users", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["space_id", "user_id"], ["spaces.id", "spaces.user_id"], name="fk_document_chunks_space_owner", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["knowledge_base_id", "space_id", "user_id"], ["knowledge_bases.id", "knowledge_bases.space_id", "knowledge_bases.user_id"], name="fk_document_chunks_knowledge_base_owner", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["document_id", "space_id", "user_id", "knowledge_base_id"], ["documents.id", "documents.space_id", "documents.user_id", "documents.knowledge_base_id"], name="fk_document_chunks_document_owner", ondelete="CASCADE"),
+        sa.Column(
+            "metadata",
+            postgresql.JSONB(),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["users.id"],
+            name="fk_document_chunks_user_id_users",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["space_id", "user_id"],
+            ["spaces.id", "spaces.user_id"],
+            name="fk_document_chunks_space_owner",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["knowledge_base_id", "space_id", "user_id"],
+            [
+                "knowledge_bases.id",
+                "knowledge_bases.space_id",
+                "knowledge_bases.user_id",
+            ],
+            name="fk_document_chunks_knowledge_base_owner",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["document_id", "space_id", "user_id", "knowledge_base_id"],
+            [
+                "documents.id",
+                "documents.space_id",
+                "documents.user_id",
+                "documents.knowledge_base_id",
+            ],
+            name="fk_document_chunks_document_owner",
+            ondelete="CASCADE",
+        ),
         sa.PrimaryKeyConstraint("id", name="pk_document_chunks"),
-        sa.UniqueConstraint("document_id", "chunk_index", name="uq_document_chunks_document_id_chunk_index"),
+        sa.UniqueConstraint(
+            "document_id",
+            "chunk_index",
+            name="uq_document_chunks_document_id_chunk_index",
+        ),
     )
-    op.create_index("ix_document_chunks_user_id_space_id", "document_chunks", ["user_id", "space_id"])
-    op.execute("CREATE INDEX ix_document_chunks_embedding_hnsw ON document_chunks USING hnsw (embedding vector_cosine_ops)")
+    op.create_index(
+        "ix_document_chunks_user_id_space_id",
+        "document_chunks",
+        ["user_id", "space_id"],
+    )
+    op.execute(
+        "CREATE INDEX ix_document_chunks_embedding_hnsw ON document_chunks USING hnsw (embedding vector_cosine_ops)"
+    )
 
 
 def downgrade() -> None:
     op.drop_index("ix_document_chunks_embedding_hnsw", table_name="document_chunks")
     op.drop_index("ix_document_chunks_user_id_space_id", table_name="document_chunks")
     op.drop_table("document_chunks")
-    op.drop_constraint("uq_documents_id_space_id_user_id_knowledge_base_id", "documents", type_="unique")
+    op.drop_constraint(
+        "uq_documents_id_space_id_user_id_knowledge_base_id",
+        "documents",
+        type_="unique",
+    )

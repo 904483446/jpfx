@@ -66,6 +66,14 @@ def document_empty() -> AppError:
     return AppError(status_code=400, code="DOCUMENT_EMPTY", message="文档不能为空")
 
 
+def document_content_not_extractable() -> AppError:
+    return AppError(
+        status_code=400,
+        code="DOCUMENT_CONTENT_NOT_EXTRACTABLE",
+        message="文档未提取到可索引的正文",
+    )
+
+
 def error_response(
     *,
     status_code: int,

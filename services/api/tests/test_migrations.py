@@ -29,11 +29,10 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "knowledge_bases",
             "documents",
             "document_chunks",
-        }.issubset(
-            inspector.get_table_names()
-        )
+        }.issubset(inspector.get_table_names())
         document_chunks = {
-            column["name"]: column for column in inspector.get_columns("document_chunks")
+            column["name"]: column
+            for column in inspector.get_columns("document_chunks")
         }
         assert str(document_chunks["embedding"]["type"]) == "VECTOR(1024)"
         unique_constraints = inspector.get_unique_constraints("document_chunks")
@@ -58,9 +57,7 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "knowledge_bases",
             "documents",
             "document_chunks",
-        }.intersection(
-            inspect(engine).get_table_names()
-        )
+        }.intersection(inspect(engine).get_table_names())
         with engine.connect() as connection:
             retained_extensions = set(
                 connection.execute(
