@@ -30,16 +30,21 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "documents",
             "document_chunks",
         }.issubset(inspector.get_table_names())
-        document_chunks = {
-            column["name"]: column
-            for column in inspector.get_columns("document_chunks")
-        }
-        assert str(document_chunks["embedding"]["type"]) == "VECTOR(1024)"
         unique_constraints = inspector.get_unique_constraints("document_chunks")
-        assert {"document_id", "chunk_index"} in {
-            set(constraint["column_names"]) for constraint in unique_constraints
+        assert frozenset({"document_id", "chunk_index"}) in {
+            frozenset(constraint["column_names"]) for constraint in unique_constraints
         }
         with engine.connect() as connection:
+            embedding_type = connection.scalar(
+                text(
+                    "SELECT format_type(a.atttypid, a.atttypmod) "
+                    "FROM pg_attribute a "
+                    "JOIN pg_class c ON c.oid = a.attrelid "
+                    "WHERE c.relname = 'document_chunks' "
+                    "AND a.attname = 'embedding'"
+                )
+            )
+            assert embedding_type == "vector(1024)"
             extensions = set(
                 connection.execute(
                     text(
