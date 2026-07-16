@@ -46,6 +46,13 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             name="ck_documents_status",
         ),
         UniqueConstraint("storage_path", name="uq_documents_storage_path"),
+        UniqueConstraint(
+            "id",
+            "space_id",
+            "user_id",
+            "knowledge_base_id",
+            name="uq_documents_id_space_id_user_id_knowledge_base_id",
+        ),
         Index(
             "ix_documents_user_id_space_id_created_at",
             "user_id",

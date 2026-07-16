@@ -23,9 +23,23 @@ def test_initial_migration_round_trip_on_empty_test_database():
     engine = create_engine(database_url)
     try:
         inspector = inspect(engine)
-        assert {"users", "spaces", "knowledge_bases", "documents"}.issubset(
+        assert {
+            "users",
+            "spaces",
+            "knowledge_bases",
+            "documents",
+            "document_chunks",
+        }.issubset(
             inspector.get_table_names()
         )
+        document_chunks = {
+            column["name"]: column for column in inspector.get_columns("document_chunks")
+        }
+        assert str(document_chunks["embedding"]["type"]) == "VECTOR(1024)"
+        unique_constraints = inspector.get_unique_constraints("document_chunks")
+        assert {"document_id", "chunk_index"} in {
+            set(constraint["column_names"]) for constraint in unique_constraints
+        }
         with engine.connect() as connection:
             extensions = set(
                 connection.execute(
@@ -38,7 +52,13 @@ def test_initial_migration_round_trip_on_empty_test_database():
         assert extensions == {"uuid-ossp", "vector"}
 
         command.downgrade(configuration, "base")
-        assert not {"users", "spaces", "knowledge_bases", "documents"}.intersection(
+        assert not {
+            "users",
+            "spaces",
+            "knowledge_bases",
+            "documents",
+            "document_chunks",
+        }.intersection(
             inspect(engine).get_table_names()
         )
         with engine.connect() as connection:
