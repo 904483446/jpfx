@@ -1,7 +1,8 @@
 from collections.abc import Generator
 from functools import lru_cache
 
-from sqlalchemy import Engine, create_engine
+from pgvector.psycopg import register_vector
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
@@ -16,10 +17,16 @@ def _resolve_database_url(database_url: str | None) -> str:
 
 @lru_cache
 def get_engine(database_url: str | None = None) -> Engine:
-    return create_engine(
+    engine = create_engine(
         _resolve_database_url(database_url),
         pool_pre_ping=True,
     )
+
+    @event.listens_for(engine, "connect")
+    def register_pgvector_adapter(dbapi_connection, _connection_record) -> None:
+        register_vector(dbapi_connection)
+
+    return engine
 
 
 @lru_cache

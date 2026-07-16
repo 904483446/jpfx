@@ -1,23 +1,13 @@
 from uuid import UUID
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKeyConstraint, Index, Integer, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.types import UserDefinedType
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-
-
-class Vector(UserDefinedType[list[float]]):
-    cache_ok = True
-
-    def __init__(self, dimensions: int) -> None:
-        self.dimensions = dimensions
-
-    def get_col_spec(self, **_kw: object) -> str:
-        return f"vector({self.dimensions})"
 
 
 class DocumentChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):

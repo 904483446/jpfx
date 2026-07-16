@@ -168,7 +168,7 @@ def test_document_chunks_are_bound_to_their_owner_document_and_knowledge_base():
     document_chunks = load_model_tables()["document_chunks"]
 
     assert ("document_id", "chunk_index") in unique_column_sets(document_chunks)
-    assert str(document_chunks.c.embedding.type) == "vector(1024)"
+    assert str(document_chunks.c.embedding.type).lower() == "vector(1024)"
     composite_foreign_keys = {
         (
             tuple(constraint.column_keys),

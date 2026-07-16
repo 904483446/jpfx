@@ -96,6 +96,8 @@ def index_document(
             else "文档索引失败，请检查文档内容或稍后重试"
         )
         database_session.commit()
+        if error.code in {"EMBEDDING_NOT_CONFIGURED", "EMBEDDING_PROVIDER_ERROR"}:
+            raise
     except Exception:
         database_session.rollback()
         document.status = "failed"
@@ -118,7 +120,7 @@ def search_documents(
     if len(vector) != 1024:
         raise ValueError("embedding vector dimensions are invalid")
 
-    distance = DocumentChunk.embedding.op("<=>")(vector)
+    distance = DocumentChunk.embedding.cosine_distance(vector)
     similarity = (1 - distance).label("similarity")
     statement = (
         select(

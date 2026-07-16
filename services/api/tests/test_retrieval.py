@@ -3,7 +3,11 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from app.core.errors import AppError, document_content_not_extractable
+from app.core.errors import (
+    AppError,
+    document_content_not_extractable,
+    embedding_not_configured,
+)
 
 
 class FakeSession:
@@ -114,6 +118,47 @@ def test_index_document_marks_failed_and_rolls_back_new_chunks(
     assert session.commits == 1
 
 
+def test_index_document_persists_failed_status_then_reraises_embedding_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    from app.services import retrieval_service
+
+    user = SimpleNamespace(id=uuid4())
+    document = SimpleNamespace(
+        id=uuid4(),
+        user_id=user.id,
+        space_id=uuid4(),
+        knowledge_base_id=uuid4(),
+        filename="brief.txt",
+        storage_path="source.txt",
+        status="uploaded",
+        error_message=None,
+    )
+    (tmp_path / document.storage_path).write_text("可检索正文", encoding="utf-8")
+    session = FakeSession()
+    monkeypatch.setattr(retrieval_service, "get_owned_document", lambda *_: document)
+    monkeypatch.setattr(
+        retrieval_service,
+        "chunk_text",
+        lambda text: [SimpleNamespace(index=0, content=text)],
+    )
+
+    class MissingKeyProvider:
+        def embed(self, _texts: list[str]) -> list[list[float]]:
+            raise embedding_not_configured()
+
+    with pytest.raises(AppError) as captured:
+        retrieval_service.index_document(
+            session, user, document.id, tmp_path, MissingKeyProvider()
+        )
+
+    assert captured.value.code == "EMBEDDING_NOT_CONFIGURED"
+    assert document.status == "failed"
+    assert document.error_message == "文档索引失败，请检查文档内容或稍后重试"
+    assert session.rollbacks == 1
+    assert session.commits == 1
+
+
 def test_index_document_hides_other_users_document(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
@@ -183,6 +228,77 @@ def test_search_documents_filters_by_current_user_and_space(
     ]
 
 
+def test_search_documents_persists_vectors_and_orders_by_cosine_similarity(
+    database_session,
+):
+    from app.models import Document, DocumentChunk, KnowledgeBase, Space, User
+    from app.services import retrieval_service
+
+    user = User(
+        email="vector-search@example.com",
+        password_hash="hashed-password",
+        display_name="vector-search",
+    )
+    database_session.add(user)
+    database_session.flush()
+    space = Space(user_id=user.id, name="向量检索空间")
+    database_session.add(space)
+    database_session.flush()
+    knowledge_base = KnowledgeBase(
+        user_id=user.id, space_id=space.id, name="默认知识库"
+    )
+    database_session.add(knowledge_base)
+    database_session.flush()
+    document = Document(
+        user_id=user.id,
+        space_id=space.id,
+        knowledge_base_id=knowledge_base.id,
+        filename="vectors.txt",
+        file_type="txt",
+        file_size=1,
+        storage_path="vector-test/vectors.txt",
+        status="indexed",
+    )
+    database_session.add(document)
+    database_session.flush()
+    database_session.add_all(
+        [
+            DocumentChunk(
+                user_id=user.id,
+                space_id=space.id,
+                knowledge_base_id=knowledge_base.id,
+                document_id=document.id,
+                chunk_index=0,
+                content="最相似的片段",
+                embedding=[1.0] + [0.0] * 1023,
+                metadata_={},
+            ),
+            DocumentChunk(
+                user_id=user.id,
+                space_id=space.id,
+                knowledge_base_id=knowledge_base.id,
+                document_id=document.id,
+                chunk_index=1,
+                content="较不相似的片段",
+                embedding=[0.0, 1.0] + [0.0] * 1022,
+                metadata_={},
+            ),
+        ]
+    )
+    database_session.flush()
+
+    results = retrieval_service.search_documents(
+        database_session,
+        user,
+        space.id,
+        "检索问题",
+        FakeEmbeddingProvider([[1.0] + [0.0] * 1023]),
+    )
+
+    assert [result.content for result in results] == ["最相似的片段", "较不相似的片段"]
+    assert results[0].similarity == pytest.approx(1.0)
+
+
 def test_retrieval_endpoints_use_authenticated_service_and_validate_input(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -243,3 +359,27 @@ def test_retrieval_endpoints_use_authenticated_service_and_validate_input(
         }
     ]
     assert invalid.status_code == 422
+
+
+def test_index_endpoint_returns_embedding_configuration_error(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from app.api.deps import get_current_user
+    from app.db.session import get_db_session
+    from app.main import app
+    from fastapi.testclient import TestClient
+
+    user = SimpleNamespace(id=uuid4())
+    monkeypatch.setattr(
+        "app.api.v1.documents.index_document",
+        lambda *_args: (_ for _ in ()).throw(embedding_not_configured()),
+    )
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_db_session] = lambda: object()
+    try:
+        response = TestClient(app).post(f"/api/v1/documents/{uuid4()}/index")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "EMBEDDING_NOT_CONFIGURED"

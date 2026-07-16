@@ -9,20 +9,13 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.types import UserDefinedType
 
 revision: str = "20260716_0003"
 down_revision: str | Sequence[str] | None = "20260715_0002"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
-
-
-class Vector(UserDefinedType[list[float]]):
-    cache_ok = True
-
-    def get_col_spec(self, **_kw: object) -> str:
-        return "vector(1024)"
 
 
 def upgrade() -> None:
@@ -46,7 +39,7 @@ def upgrade() -> None:
         sa.Column("document_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("chunk_index", sa.Integer(), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("embedding", Vector(), nullable=False),
+        sa.Column("embedding", Vector(1024), nullable=False),
         sa.Column(
             "metadata",
             postgresql.JSONB(),
