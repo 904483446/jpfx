@@ -74,6 +74,22 @@ def document_content_not_extractable() -> AppError:
     )
 
 
+def embedding_not_configured() -> AppError:
+    return AppError(
+        status_code=500,
+        code="EMBEDDING_NOT_CONFIGURED",
+        message="未配置 DashScope API Key，无法生成文档向量",
+    )
+
+
+def embedding_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="EMBEDDING_PROVIDER_ERROR",
+        message="文档向量生成服务暂时不可用",
+    )
+
+
 def error_response(
     *,
     status_code: int,
