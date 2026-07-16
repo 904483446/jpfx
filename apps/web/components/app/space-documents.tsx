@@ -108,7 +108,7 @@ export function SpaceDocuments({ spaceId }: { spaceId: string }) {
     <section className="mt-6">
       {documents === null && !error && <p className="text-sm text-slate-500">正在加载文档…</p>}
       {documents?.length === 0 && <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">还没有上传文档</p>}
-      {documents && documents.length > 0 && <ul className="space-y-3">{documents.map((document) => <li className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4" key={document.id}><div><p className="font-medium">{document.filename}</p><p className="mt-1 text-sm text-slate-500">{statusLabels[document.status]}</p>{document.error_message && <p className="mt-1 text-sm text-red-600">{document.error_message}</p>}</div><Button aria-label={`删除 ${document.filename}`} disabled={isSubmitting} onClick={() => void onDelete(document)} type="button" variant="outline">删除</Button></li>)}</ul>}
+      {documents && documents.length > 0 && <ul className="space-y-3">{documents.map((document) => <li className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4" key={document.id}><div><p className="font-medium">{document.filename}</p><p className="mt-1 text-sm text-slate-500">{document.file_type.toUpperCase()} · {document.file_size} B · {new Date(document.created_at).toLocaleString("zh-CN")} · {statusLabels[document.status]}</p>{document.error_message && <p className="mt-1 text-sm text-red-600">{document.error_message}</p>}</div><Button aria-label={`删除 ${document.filename}`} disabled={isSubmitting} onClick={() => void onDelete(document)} type="button" variant="outline">删除</Button></li>)}</ul>}
     </section>
   </div>;
 }

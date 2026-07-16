@@ -34,7 +34,7 @@ describe("SpaceDocuments", () => {
     render(<SpaceDocuments spaceId="space-1" />);
     expect(await screen.findByRole("heading", { name: "文档管理" })).toBeInTheDocument();
     expect(screen.getByText("brief.pdf")).toBeInTheDocument();
-    expect(screen.getByText("已上传")).toBeInTheDocument();
+    expect(screen.getByText(/PDF.*2048 B.*2026/)).toBeInTheDocument();
   });
 
   it("redirects an unauthenticated visitor", async () => {
