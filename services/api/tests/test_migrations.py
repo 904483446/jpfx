@@ -23,7 +23,7 @@ def test_initial_migration_round_trip_on_empty_test_database():
     engine = create_engine(database_url)
     try:
         inspector = inspect(engine)
-        assert {"users", "spaces", "knowledge_bases"}.issubset(
+        assert {"users", "spaces", "knowledge_bases", "documents"}.issubset(
             inspector.get_table_names()
         )
         with engine.connect() as connection:
@@ -38,7 +38,7 @@ def test_initial_migration_round_trip_on_empty_test_database():
         assert extensions == {"uuid-ossp", "vector"}
 
         command.downgrade(configuration, "base")
-        assert not {"users", "spaces", "knowledge_bases"}.intersection(
+        assert not {"users", "spaces", "knowledge_bases", "documents"}.intersection(
             inspect(engine).get_table_names()
         )
         with engine.connect() as connection:

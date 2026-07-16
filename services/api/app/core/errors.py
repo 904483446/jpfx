@@ -42,6 +42,30 @@ def space_not_found() -> AppError:
     )
 
 
+def document_not_found() -> AppError:
+    return AppError(status_code=404, code="DOCUMENT_NOT_FOUND", message="文档不存在")
+
+
+def document_type_not_supported() -> AppError:
+    return AppError(
+        status_code=400,
+        code="DOCUMENT_TYPE_NOT_SUPPORTED",
+        message="仅支持 PDF、DOCX、TXT 和 MD 文档",
+    )
+
+
+def document_too_large() -> AppError:
+    return AppError(
+        status_code=400,
+        code="DOCUMENT_TOO_LARGE",
+        message="单个文档不能超过 20MB",
+    )
+
+
+def document_empty() -> AppError:
+    return AppError(status_code=400, code="DOCUMENT_EMPTY", message="文档不能为空")
+
+
 def error_response(
     *,
     status_code: int,
