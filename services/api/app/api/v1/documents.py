@@ -15,6 +15,8 @@ from app.services.document_service import (
     list_documents,
 )
 from app.services.document_storage import LocalDocumentStorage
+from app.services.embedding_provider import DashScopeEmbeddingProvider
+from app.services.retrieval_service import index_document
 
 spaces_router = APIRouter(prefix="/spaces", tags=["documents"])
 documents_router = APIRouter(prefix="/documents", tags=["documents"])
@@ -66,3 +68,19 @@ def remove_document(
         document_id,
         LocalDocumentStorage(settings.document_storage_root),
     )
+
+
+@documents_router.post("/{document_id}/index", response_model=DocumentResponse)
+def index_existing_document(
+    document_id: UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    database_session: Annotated[Session, Depends(get_db_session)],
+) -> DocumentResponse:
+    document = index_document(
+        database_session,
+        current_user,
+        document_id,
+        settings.document_storage_root,
+        DashScopeEmbeddingProvider(),
+    )
+    return DocumentResponse.model_validate(document)

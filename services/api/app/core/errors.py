@@ -46,6 +46,14 @@ def document_not_found() -> AppError:
     return AppError(status_code=404, code="DOCUMENT_NOT_FOUND", message="文档不存在")
 
 
+def document_not_indexable() -> AppError:
+    return AppError(
+        status_code=409,
+        code="DOCUMENT_NOT_INDEXABLE",
+        message="当前文档状态不支持开始索引",
+    )
+
+
 def document_type_not_supported() -> AppError:
     return AppError(
         status_code=400,
