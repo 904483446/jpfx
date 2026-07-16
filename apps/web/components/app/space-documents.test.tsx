@@ -4,16 +4,18 @@ import userEvent from "@testing-library/user-event";
 
 import { ApiClientError } from "@/lib/api-client";
 
-const { getCurrentUser, listDocuments, uploadDocument, deleteDocument, replace } = vi.hoisted(() => ({
+const { getCurrentUser, listDocuments, uploadDocument, deleteDocument, indexDocument, replace } = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   listDocuments: vi.fn(),
   uploadDocument: vi.fn(),
   deleteDocument: vi.fn(),
+  indexDocument: vi.fn(),
   replace: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getCurrentUser }));
 vi.mock("@/lib/documents", () => ({ listDocuments, uploadDocument, deleteDocument }));
+vi.mock("@/lib/retrieval", () => ({ indexDocument }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
 import { SpaceDocuments } from "./space-documents";
@@ -64,5 +66,26 @@ describe("SpaceDocuments", () => {
     await interaction.click(await screen.findByRole("button", { name: "删除 brief.pdf" }));
     await waitFor(() => expect(deleteDocument).toHaveBeenCalledWith("document-1"));
     expect(await screen.findByText("还没有上传文档")).toBeInTheDocument();
+  });
+
+  it("indexes an uploaded document then refreshes the list", async () => {
+    const interaction = userEvent.setup();
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([document]).mockResolvedValueOnce([{ ...document, status: "indexed" }]);
+    indexDocument.mockResolvedValueOnce({ ...document, status: "indexed" });
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    await interaction.click(await screen.findByRole("button", { name: "开始索引 brief.pdf" }));
+
+    await waitFor(() => expect(indexDocument).toHaveBeenCalledWith("document-1"));
+    expect(await screen.findByText(/已索引/)).toBeInTheDocument();
+  });
+
+  it("disables indexing while a document is processing", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([{ ...document, status: "processing" }]);
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    expect(await screen.findByRole("button", { name: "正在处理 brief.pdf" })).toBeDisabled();
   });
 });
