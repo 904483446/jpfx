@@ -146,6 +146,22 @@ def deepseek_not_configured() -> AppError:
     )
 
 
+def deepseek_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="DEEPSEEK_PROVIDER_ERROR",
+        message="DeepSeek 分析服务暂时不可用",
+    )
+
+
+def analysis_pipeline_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="ANALYSIS_PIPELINE_ERROR",
+        message="分析任务执行失败，请稍后重试",
+    )
+
+
 def search_not_configured() -> AppError:
     return AppError(
         status_code=409,

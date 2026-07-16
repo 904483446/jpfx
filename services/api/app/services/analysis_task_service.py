@@ -143,6 +143,20 @@ def retry_analysis_task(
     return task
 
 
+def queue_analysis_task(
+    database_session: Session, user: User, task_id: UUID
+) -> AnalysisTask:
+    task = get_analysis_task(database_session, user, task_id)
+    if not 1 <= len(task.final_competitors) <= 3:
+        raise invalid_competitor_selection()
+    transition_task(task, "queued")
+    task.error_message = None
+    task.stage = "queued"
+    database_session.commit()
+    database_session.refresh(task)
+    return task
+
+
 def transition_task(task: AnalysisTask, target: str) -> None:
     if target not in _ALLOWED_TRANSITIONS.get(task.status, set()):
         raise invalid_task_state()

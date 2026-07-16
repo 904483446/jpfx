@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -13,12 +13,14 @@ from app.schemas.analysis_task import (
     CandidateResponse,
     CompetitorSelectionRequest,
 )
+from app.services.analysis_runner import run_analysis_task
 from app.services.analysis_task_service import (
     auto_select_competitors,
     create_analysis_task,
     discover_task_candidates,
     get_analysis_task,
     list_task_candidates,
+    queue_analysis_task,
     retry_analysis_task,
     select_competitors,
 )
@@ -88,6 +90,22 @@ def auto_select(
     database_session: Annotated[Session, Depends(get_db_session)],
 ) -> AnalysisTaskResponse:
     task = auto_select_competitors(database_session, current_user, task_id)
+    return _task_response(database_session, task)
+
+
+@tasks_router.post(
+    "/{task_id}/run",
+    response_model=AnalysisTaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def run_task(
+    task_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_user)],
+    database_session: Annotated[Session, Depends(get_db_session)],
+) -> AnalysisTaskResponse:
+    task = queue_analysis_task(database_session, current_user, task_id)
+    background_tasks.add_task(run_analysis_task, task.id)
     return _task_response(database_session, task)
 
 
