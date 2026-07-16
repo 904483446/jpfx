@@ -29,11 +29,41 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "knowledge_bases",
             "documents",
             "document_chunks",
+            "model_configs",
+            "analysis_tasks",
+            "competitor_candidates",
+            "task_evidence",
+            "competitor_reports",
         }.issubset(inspector.get_table_names())
         unique_constraints = inspector.get_unique_constraints("document_chunks")
         assert frozenset({"document_id", "chunk_index"}) in {
             frozenset(constraint["column_names"]) for constraint in unique_constraints
         }
+        evidence_foreign_keys = {
+            (
+                tuple(foreign_key["constrained_columns"]),
+                foreign_key["referred_table"],
+                tuple(foreign_key["referred_columns"]),
+            )
+            for foreign_key in inspector.get_foreign_keys("task_evidence")
+        }
+        assert (
+            ("document_id", "space_id", "user_id"),
+            "documents",
+            ("id", "space_id", "user_id"),
+        ) in evidence_foreign_keys
+        evidence_checks = {
+            constraint["name"]: constraint["sqltext"]
+            for constraint in inspector.get_check_constraints("task_evidence")
+        }
+        assert evidence_checks["ck_task_evidence_chunk_knowledge_base"] == (
+            "chunk_id IS NULL OR knowledge_base_id IS NOT NULL"
+        )
+        assert (
+            ("chunk_id", "space_id", "user_id", "knowledge_base_id"),
+            "document_chunks",
+            ("id", "space_id", "user_id", "knowledge_base_id"),
+        ) in evidence_foreign_keys
         with engine.connect() as connection:
             embedding_type = connection.scalar(
                 text(
@@ -62,6 +92,11 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "knowledge_bases",
             "documents",
             "document_chunks",
+            "model_configs",
+            "analysis_tasks",
+            "competitor_candidates",
+            "task_evidence",
+            "competitor_reports",
         }.intersection(inspect(engine).get_table_names())
         with engine.connect() as connection:
             retained_extensions = set(

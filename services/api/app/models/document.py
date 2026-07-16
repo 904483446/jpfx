@@ -53,6 +53,12 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             "knowledge_base_id",
             name="uq_documents_id_space_id_user_id_knowledge_base_id",
         ),
+        UniqueConstraint(
+            "id",
+            "space_id",
+            "user_id",
+            name="uq_documents_id_space_id_user_id",
+        ),
         Index(
             "ix_documents_user_id_space_id_created_at",
             "user_id",

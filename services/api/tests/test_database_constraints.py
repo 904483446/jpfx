@@ -5,7 +5,15 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from app.core.config import Settings
-from app.models import KnowledgeBase, Space, User
+from app.models import (
+    AnalysisTask,
+    Document,
+    DocumentChunk,
+    KnowledgeBase,
+    Space,
+    TaskEvidence,
+    User,
+)
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -145,3 +153,108 @@ def test_physically_deleting_space_cascades_to_knowledge_base(
     assert database_session.scalar(select(func.count()).select_from(User)) == 1
     assert database_session.scalar(select(func.count()).select_from(Space)) == 0
     assert database_session.scalar(select(func.count()).select_from(KnowledgeBase)) == 0
+
+
+def test_task_evidence_cannot_reference_document_owned_by_another_space(
+    database_session: Session,
+):
+    document_owner = create_user(database_session, "document-owner@example.com")
+    evidence_owner = create_user(database_session, "evidence-owner@example.com")
+    document_space = create_space(database_session, document_owner, "文档空间")
+    evidence_space = create_space(database_session, evidence_owner, "证据空间")
+    knowledge_base = KnowledgeBase(
+        user_id=document_owner.id,
+        space_id=document_space.id,
+        name="默认知识库",
+    )
+    database_session.add(knowledge_base)
+    database_session.flush()
+    document = Document(
+        user_id=document_owner.id,
+        space_id=document_space.id,
+        knowledge_base_id=knowledge_base.id,
+        filename="private.txt",
+        file_type="txt",
+        file_size=1,
+        storage_path="private.txt",
+    )
+    task = AnalysisTask(
+        user_id=evidence_owner.id,
+        space_id=evidence_space.id,
+        title="隔离验证",
+        industry="AI",
+        product_direction="研究",
+    )
+    database_session.add_all([document, task])
+    database_session.flush()
+    database_session.add(
+        TaskEvidence(
+            user_id=evidence_owner.id,
+            space_id=evidence_space.id,
+            task_id=task.id,
+            source_type="private_knowledge",
+            source_title="越权文档",
+            document_id=document.id,
+        )
+    )
+
+    with pytest.raises(IntegrityError):
+        database_session.flush()
+
+
+def test_task_evidence_cannot_reference_foreign_chunk_without_knowledge_base(
+    database_session: Session,
+):
+    document_owner = create_user(database_session, "chunk-owner@example.com")
+    evidence_owner = create_user(database_session, "chunk-evidence-owner@example.com")
+    document_space = create_space(database_session, document_owner, "文档空间")
+    evidence_space = create_space(database_session, evidence_owner, "证据空间")
+    knowledge_base = KnowledgeBase(
+        user_id=document_owner.id,
+        space_id=document_space.id,
+        name="默认知识库",
+    )
+    database_session.add(knowledge_base)
+    database_session.flush()
+    document = Document(
+        user_id=document_owner.id,
+        space_id=document_space.id,
+        knowledge_base_id=knowledge_base.id,
+        filename="private.txt",
+        file_type="txt",
+        file_size=1,
+        storage_path="private-chunk.txt",
+    )
+    database_session.add(document)
+    database_session.flush()
+    chunk = DocumentChunk(
+        user_id=document_owner.id,
+        space_id=document_space.id,
+        knowledge_base_id=knowledge_base.id,
+        document_id=document.id,
+        chunk_index=0,
+        content="private",
+        embedding=[0.0] * 1024,
+    )
+    task = AnalysisTask(
+        user_id=evidence_owner.id,
+        space_id=evidence_space.id,
+        title="隔离验证",
+        industry="AI",
+        product_direction="研究",
+    )
+    database_session.add_all([chunk, task])
+    database_session.flush()
+    database_session.add(
+        TaskEvidence(
+            user_id=evidence_owner.id,
+            space_id=evidence_space.id,
+            task_id=task.id,
+            source_type="private_knowledge",
+            source_title="越权切片",
+            chunk_id=chunk.id,
+        )
+    )
+
+    with pytest.raises(IntegrityError):
+        database_session.flush()

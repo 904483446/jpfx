@@ -98,6 +98,22 @@ def embedding_provider_error() -> AppError:
     )
 
 
+def model_config_encryption_not_configured() -> AppError:
+    return AppError(
+        status_code=500,
+        code="MODEL_CONFIG_ENCRYPTION_NOT_CONFIGURED",
+        message="模型配置密钥加密未配置",
+    )
+
+
+def model_config_decryption_failed() -> AppError:
+    return AppError(
+        status_code=500,
+        code="MODEL_CONFIG_DECRYPTION_FAILED",
+        message="模型配置密钥解密失败",
+    )
+
+
 def error_response(
     *,
     status_code: int,

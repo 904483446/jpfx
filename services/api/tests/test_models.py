@@ -27,6 +27,11 @@ def test_base_models_define_required_tables_and_columns():
         "knowledge_bases",
         "documents",
         "document_chunks",
+        "model_configs",
+        "analysis_tasks",
+        "competitor_candidates",
+        "task_evidence",
+        "competitor_reports",
     }
     assert set(tables["users"].columns.keys()) == {
         "id",
@@ -81,6 +86,15 @@ def test_base_models_define_required_tables_and_columns():
         "content",
         "embedding",
         "metadata",
+        "created_at",
+        "updated_at",
+    }
+    assert set(tables["model_configs"].columns.keys()) == {
+        "id",
+        "user_id",
+        "provider",
+        "encrypted_api_key",
+        "api_key_hint",
         "created_at",
         "updated_at",
     }
@@ -168,6 +182,12 @@ def test_document_chunks_are_bound_to_their_owner_document_and_knowledge_base():
     document_chunks = load_model_tables()["document_chunks"]
 
     assert ("document_id", "chunk_index") in unique_column_sets(document_chunks)
+    assert (
+        "id",
+        "space_id",
+        "user_id",
+        "knowledge_base_id",
+    ) in unique_column_sets(document_chunks)
     assert str(document_chunks.c.embedding.type).lower() == "vector(1024)"
     composite_foreign_keys = {
         (
@@ -198,3 +218,83 @@ def test_document_chunks_are_bound_to_their_owner_document_and_knowledge_base():
             "documents.knowledge_base_id",
         ),
     ) in composite_foreign_keys
+
+
+def test_competitor_analysis_models_are_bound_to_their_owner_space_and_task():
+    tables = load_model_tables()
+    model_configs = tables["model_configs"]
+    analysis_tasks = tables["analysis_tasks"]
+    candidates = tables["competitor_candidates"]
+    evidence = tables["task_evidence"]
+    reports = tables["competitor_reports"]
+
+    assert ("user_id", "provider") in unique_column_sets(model_configs)
+    assert "api_key" not in model_configs.c
+    assert {"encrypted_api_key", "api_key_hint"}.issubset(model_configs.c.keys())
+    checks = {
+        constraint.name: str(constraint.sqltext)
+        for constraint in analysis_tasks.constraints
+        if constraint.__class__.__name__ == "CheckConstraint"
+    }
+    assert checks["ck_analysis_tasks_status"] == (
+        "status IN ('draft', 'queued', 'running', 'completed', 'failed')"
+    )
+    evidence_checks = {
+        constraint.name: str(constraint.sqltext)
+        for constraint in evidence.constraints
+        if constraint.__class__.__name__ == "CheckConstraint"
+    }
+    assert evidence_checks["ck_task_evidence_chunk_knowledge_base"] == (
+        "chunk_id IS NULL OR knowledge_base_id IS NOT NULL"
+    )
+
+    for table in (analysis_tasks, candidates, evidence, reports):
+        composite_foreign_keys = {
+            (
+                tuple(constraint.column_keys),
+                tuple(element.target_fullname for element in constraint.elements),
+            )
+            for constraint in table.constraints
+            if isinstance(constraint, ForeignKeyConstraint)
+        }
+        assert (
+            ("space_id", "user_id"),
+            ("spaces.id", "spaces.user_id"),
+        ) in composite_foreign_keys
+
+    candidate_foreign_keys = {
+        (
+            tuple(constraint.column_keys),
+            tuple(element.target_fullname for element in constraint.elements),
+        )
+        for constraint in candidates.constraints
+        if isinstance(constraint, ForeignKeyConstraint)
+    }
+    assert (
+        ("task_id", "space_id", "user_id"),
+        ("analysis_tasks.id", "analysis_tasks.space_id", "analysis_tasks.user_id"),
+    ) in candidate_foreign_keys
+    evidence_foreign_keys = {
+        (
+            tuple(constraint.column_keys),
+            tuple(element.target_fullname for element in constraint.elements),
+        )
+        for constraint in evidence.constraints
+        if isinstance(constraint, ForeignKeyConstraint)
+    }
+    assert (
+        ("document_id", "space_id", "user_id"),
+        ("documents.id", "documents.space_id", "documents.user_id"),
+    ) in evidence_foreign_keys
+    assert (
+        ("chunk_id", "space_id", "user_id", "knowledge_base_id"),
+        (
+            "document_chunks.id",
+            "document_chunks.space_id",
+            "document_chunks.user_id",
+            "document_chunks.knowledge_base_id",
+        ),
+    ) in evidence_foreign_keys
+    assert evidence.c.source_type.type.length == 30
+    assert "knowledge_base_id" in evidence.c
+    assert "structured_json" in reports.c
