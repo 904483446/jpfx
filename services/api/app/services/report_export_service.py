@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from html import escape
 from io import BytesIO
 from typing import Any
+from urllib.parse import urlparse
 
 from docx import Document
 from docx.shared import Inches
@@ -169,7 +170,7 @@ def _append_pdf_evidence(story, evidence, heading, body) -> None:
             )
         for entry in entries:
             url = _text(entry.source_url)
-            link = _link(url) if url else "无链接"
+            link = _link(url) if _is_safe_external_url(url) else _xml(url) if url else "无链接"
             rows.append(
                 [
                     Paragraph(_LABELS[source_type], cell),
@@ -234,6 +235,11 @@ def _xml(value: str) -> str:
 def _link(url: str) -> str:
     escaped = _xml(url)
     return f'<link href="{escaped}">{escaped}</link>'
+
+
+def _is_safe_external_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme.lower() in {"http", "https"} and bool(parsed.netloc)
 
 
 def _footer(title: str):

@@ -210,3 +210,22 @@ def test_pdf_export_escapes_untrusted_report_and_evidence_text(
     assert "<unclosed report>" in text
     assert "<b>Competitor</b>" in text
     assert "<unclosed" in text
+
+
+@pytest.mark.parametrize("unsafe_url", ["javascript:alert(1)", "file:///etc/passwd", "data:text/html,unsafe"])
+def test_pdf_export_does_not_create_links_for_unsafe_evidence_urls(
+    client, database_session, unsafe_url
+):
+    user = _authenticate(client, database_session, f"reports-url-{len(unsafe_url)}@example.com")
+    report = _create_report(database_session, user)
+    evidence = database_session.query(TaskEvidence).filter_by(task_id=report.task_id).first()
+    assert evidence is not None
+    evidence.source_url = unsafe_url
+    database_session.commit()
+
+    response = client.get(f"/api/v1/reports/{report.id}/export/pdf")
+
+    assert response.status_code == 200
+    reader = PdfReader(BytesIO(response.content))
+    annotations = [annotation.get_object() for page in reader.pages for annotation in page.get("/Annots", [])]
+    assert all(annotation.get("/A", {}).get("/URI") != unsafe_url for annotation in annotations)

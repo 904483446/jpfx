@@ -51,6 +51,15 @@ describe("ReportDetail", () => {
     expect(downloadReport).toHaveBeenCalledWith("report-1", "pdf");
   });
 
+  it.each(["javascript:alert(1)", "file:///etc/passwd", "data:text/html,unsafe"])("renders unsafe evidence URL %s as plain text instead of a link", async (unsafeUrl) => {
+    getReport.mockResolvedValue(report);
+    getReportEvidence.mockResolvedValue([...evidence, { id: "e4", source_type: "web", source_title: "不安全来源", source_url: unsafeUrl, quote: null, retrieved_at: null }]);
+    render(<ReportDetail reportId="report-1" />);
+
+    expect(await screen.findByText("不安全来源")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "不安全来源" })).not.toBeInTheDocument();
+  });
+
   it("redirects to login when the report is unauthorized", async () => {
     getReport.mockRejectedValue(new ApiClientError("UNAUTHORIZED", "登录已过期"));
     render(<ReportDetail reportId="report-1" />);
