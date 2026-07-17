@@ -51,6 +51,13 @@ class DocumentChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             "chunk_index",
             name="uq_document_chunks_document_id_chunk_index",
         ),
+        UniqueConstraint(
+            "id",
+            "space_id",
+            "user_id",
+            "knowledge_base_id",
+            name="uq_document_chunks_id_space_id_user_id_knowledge_base_id",
+        ),
         Index("ix_document_chunks_user_id_space_id", "user_id", "space_id"),
         Index(
             "ix_document_chunks_embedding_hnsw",

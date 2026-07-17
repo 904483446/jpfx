@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = "http://127.0.0.1:3000"
     document_storage_root: Path = Path(__file__).resolve().parents[2] / "storage"
     dashscope_api_key: str | None = None
+    api_key_encryption_secret: str | None = None
+    bocha_api_key: str | None = None
 
     @field_validator("cors_allowed_origins")
     @classmethod

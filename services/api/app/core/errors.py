@@ -42,6 +42,30 @@ def space_not_found() -> AppError:
     )
 
 
+def analysis_task_not_found() -> AppError:
+    return AppError(
+        status_code=404,
+        code="ANALYSIS_TASK_NOT_FOUND",
+        message="分析任务不存在",
+    )
+
+
+def invalid_task_state() -> AppError:
+    return AppError(
+        status_code=409,
+        code="INVALID_TASK_STATE",
+        message="当前任务状态不支持此操作",
+    )
+
+
+def invalid_competitor_selection() -> AppError:
+    return AppError(
+        status_code=422,
+        code="INVALID_COMPETITOR_SELECTION",
+        message="请选择当前任务中的 1 至 3 个候选竞品",
+    )
+
+
 def document_not_found() -> AppError:
     return AppError(status_code=404, code="DOCUMENT_NOT_FOUND", message="文档不存在")
 
@@ -95,6 +119,62 @@ def embedding_provider_error() -> AppError:
         status_code=502,
         code="EMBEDDING_PROVIDER_ERROR",
         message="文档向量生成服务暂时不可用",
+    )
+
+
+def model_config_encryption_not_configured() -> AppError:
+    return AppError(
+        status_code=500,
+        code="MODEL_CONFIG_ENCRYPTION_NOT_CONFIGURED",
+        message="模型配置密钥加密未配置",
+    )
+
+
+def model_config_decryption_failed() -> AppError:
+    return AppError(
+        status_code=500,
+        code="MODEL_CONFIG_DECRYPTION_FAILED",
+        message="模型配置密钥解密失败",
+    )
+
+
+def deepseek_not_configured() -> AppError:
+    return AppError(
+        status_code=409,
+        code="DEEPSEEK_NOT_CONFIGURED",
+        message="未配置 DeepSeek API Key",
+    )
+
+
+def deepseek_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="DEEPSEEK_PROVIDER_ERROR",
+        message="DeepSeek 分析服务暂时不可用",
+    )
+
+
+def analysis_pipeline_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="ANALYSIS_PIPELINE_ERROR",
+        message="分析任务执行失败，请稍后重试",
+    )
+
+
+def search_not_configured() -> AppError:
+    return AppError(
+        status_code=409,
+        code="SEARCH_NOT_CONFIGURED",
+        message="未配置 Bocha Search API Key",
+    )
+
+
+def search_provider_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="SEARCH_PROVIDER_ERROR",
+        message="公开网页搜索服务暂时不可用",
     )
 
 
@@ -153,11 +233,17 @@ async def validation_exception_handler(
     request: Request,
     exc: RequestValidationError,
 ) -> JSONResponse:
+    validation_errors = []
+    for error in exc.errors():
+        sanitized_error = dict(error)
+        if "api_key" in sanitized_error.get("loc", ()):
+            sanitized_error.pop("input", None)
+        validation_errors.append(sanitized_error)
     return error_response(
         status_code=422,
         code="VALIDATION_ERROR",
         message="请求参数校验失败",
-        details={"errors": jsonable_encoder(exc.errors())},
+        details={"errors": jsonable_encoder(validation_errors)},
     )
 
 

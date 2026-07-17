@@ -206,6 +206,9 @@ def test_search_documents_filters_by_current_user_and_space(
     provider = FakeEmbeddingProvider([[0.2] * 1024])
     monkeypatch.setattr(retrieval_service, "get_space", lambda *_: object())
     row = SimpleNamespace(
+        document_id=uuid4(),
+        chunk_id=uuid4(),
+        knowledge_base_id=uuid4(),
         content="命中的片段",
         filename="brief.txt",
         chunk_index=3,
@@ -220,6 +223,9 @@ def test_search_documents_filters_by_current_user_and_space(
     assert provider.texts == [["检索问题"]]
     assert results == [
         retrieval_service.RetrievalResult(
+            document_id=row.document_id,
+            chunk_id=row.chunk_id,
+            knowledge_base_id=row.knowledge_base_id,
             content="命中的片段",
             filename="brief.txt",
             chunk_index=3,
@@ -325,6 +331,9 @@ def test_retrieval_endpoints_use_authenticated_service_and_validate_input(
         "app.api.v1.retrieval.search_documents",
         lambda *_args, **_kwargs: [
             retrieval_service.RetrievalResult(
+                document_id=uuid4(),
+                chunk_id=uuid4(),
+                knowledge_base_id=uuid4(),
                 content="命中的片段",
                 filename="brief.txt",
                 chunk_index=0,
