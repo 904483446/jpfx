@@ -30,17 +30,30 @@ def _owned_report(session: Session, user: User, report_id: UUID) -> CompetitorRe
 def _evidence(
     session: Session, user: User, report: CompetitorReport
 ) -> list[TaskEvidence]:
-    return list(
-        session.scalars(
-            select(TaskEvidence)
-            .where(
+    snapshot_ids: list[UUID] = []
+    for item in report.structured_json.get("evidence", []):
+        if not isinstance(item, dict):
+            continue
+        try:
+            evidence_id = UUID(str(item.get("id")))
+        except (TypeError, ValueError):
+            continue
+        if evidence_id not in snapshot_ids:
+            snapshot_ids.append(evidence_id)
+    if not snapshot_ids:
+        return []
+    evidence_by_id = {
+        item.id: item
+        for item in session.scalars(
+            select(TaskEvidence).where(
+                TaskEvidence.id.in_(snapshot_ids),
                 TaskEvidence.task_id == report.task_id,
                 TaskEvidence.user_id == user.id,
                 TaskEvidence.space_id == report.space_id,
             )
-            .order_by(TaskEvidence.created_at)
         )
-    )
+    }
+    return [evidence_by_id[evidence_id] for evidence_id in snapshot_ids if evidence_id in evidence_by_id]
 
 
 @router.get("/{report_id}", response_model=ReportResponse)

@@ -196,6 +196,42 @@ def test_auto_selects_at_most_three_candidates_with_web_evidence_and_retry_is_gu
     assert client.post(f"/api/v1/analysis-tasks/{task.id}/retry").status_code == 409
 
 
+@pytest.mark.parametrize("task_status", ["queued", "running", "completed", "failed"])
+def test_non_draft_task_cannot_mutate_candidates(
+    client: TestClient, database_session: Session, task_status: str
+):
+    user = authenticate(client, database_session, f"locked-{task_status}@example.com")
+    space = create_space(client)
+    task_payload = create_task(client, space["id"])
+    task = database_session.get(AnalysisTask, task_payload["id"])
+    assert task is not None
+    candidate = CompetitorCandidate(
+        user_id=user.id,
+        space_id=task.space_id,
+        task_id=task.id,
+        name="Locked candidate",
+        source_type="manual",
+    )
+    database_session.add(candidate)
+    task.status = task_status
+    database_session.commit()
+
+    responses = [
+        client.post(f"/api/v1/analysis-tasks/{task.id}/candidates/discover"),
+        client.put(
+            f"/api/v1/analysis-tasks/{task.id}/competitors",
+            json={"candidate_ids": [str(candidate.id)]},
+        ),
+        client.post(f"/api/v1/analysis-tasks/{task.id}/competitors/auto-select"),
+    ]
+
+    assert [response.status_code for response in responses] == [409, 409, 409]
+    database_session.refresh(task)
+    database_session.refresh(candidate)
+    assert task.final_competitors == []
+    assert candidate.is_selected is False
+
+
 def test_run_queues_task_and_schedules_background_work_by_task_id(
     client: TestClient, database_session: Session, monkeypatch: pytest.MonkeyPatch
 ):

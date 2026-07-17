@@ -68,6 +68,7 @@ def discover_task_candidates(
     search_provider: SearchProvider,
 ) -> AnalysisTask:
     task = get_analysis_task(database_session, user, task_id)
+    _require_draft_candidate_mutation(task)
     discover_candidates(database_session, user, task, search_provider)
     return task
 
@@ -79,6 +80,7 @@ def select_competitors(
     candidate_ids: Sequence[UUID],
 ) -> AnalysisTask:
     task = get_analysis_task(database_session, user, task_id)
+    _require_draft_candidate_mutation(task)
     if not 1 <= len(candidate_ids) <= 3 or len(set(candidate_ids)) != len(
         candidate_ids
     ):
@@ -103,6 +105,7 @@ def auto_select_competitors(
     database_session: Session, user: User, task_id: UUID
 ) -> AnalysisTask:
     task = get_analysis_task(database_session, user, task_id)
+    _require_draft_candidate_mutation(task)
     rows = database_session.execute(
         select(CompetitorCandidate)
         .join(TaskEvidence, TaskEvidence.candidate_id == CompetitorCandidate.id)
@@ -161,6 +164,11 @@ def transition_task(task: AnalysisTask, target: str) -> None:
     if target not in _ALLOWED_TRANSITIONS.get(task.status, set()):
         raise invalid_task_state()
     task.status = target
+
+
+def _require_draft_candidate_mutation(task: AnalysisTask) -> None:
+    if task.status != "draft":
+        raise invalid_task_state()
 
 
 def list_task_candidates(

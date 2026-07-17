@@ -5,6 +5,9 @@ from typing import Any
 from urllib.parse import urlparse
 
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Inches
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -208,10 +211,33 @@ def _append_docx_evidence(document: Document, evidence: Iterable[TaskEvidence]) 
         if not entries:
             document.add_paragraph("暂无")
         for entry in entries:
-            document.add_paragraph(
-                f"{entry.source_title}: {entry.source_url or '无链接'}",
-                style="List Bullet",
-            )
+            paragraph = document.add_paragraph(style="List Bullet")
+            paragraph.add_run(f"{entry.source_title}: ")
+            url = _text(entry.source_url)
+            if _is_safe_external_url(url):
+                _add_docx_hyperlink(paragraph, url)
+            else:
+                paragraph.add_run(url or "无链接")
+
+
+def _add_docx_hyperlink(paragraph, url: str) -> None:
+    relationship_id = paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), relationship_id)
+    run = OxmlElement("w:r")
+    run_properties = OxmlElement("w:rPr")
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "0563C1")
+    run_properties.append(color)
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    run_properties.append(underline)
+    run.append(run_properties)
+    text = OxmlElement("w:t")
+    text.text = url
+    run.append(text)
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
 
 
 def _group(evidence: Iterable[TaskEvidence]) -> dict[str, list[TaskEvidence]]:

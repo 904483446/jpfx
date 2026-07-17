@@ -1,6 +1,8 @@
 from collections.abc import Generator
 from datetime import UTC, datetime
 from io import BytesIO
+from xml.etree import ElementTree
+from zipfile import ZipFile
 
 import pytest
 from app.core.config import settings
@@ -11,6 +13,7 @@ from app.models import AnalysisTask, CompetitorReport, Space, TaskEvidence, User
 from app.schemas.auth import RegisterRequest
 from app.services.auth_service import register_user
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
 from sqlalchemy.orm import Session
@@ -90,13 +93,13 @@ def _create_report(database_session: Session, user: User) -> CompetitorReport:
     )
     database_session.add(report)
     database_session.flush()
+    evidence_ids = []
     for source_type, title, url in [
         ("web", "Web source", "https://example.com/web"),
         ("private_knowledge", "Private brief", None),
         ("model_inference", "Inference", None),
     ]:
-        database_session.add(
-            TaskEvidence(
+        evidence = TaskEvidence(
                 user_id=user.id,
                 space_id=space.id,
                 task_id=task.id,
@@ -106,7 +109,10 @@ def _create_report(database_session: Session, user: User) -> CompetitorReport:
                 quote="Evidence quote",
                 retrieved_at=datetime.now(UTC),
             )
-        )
+        database_session.add(evidence)
+        database_session.flush()
+        evidence_ids.append({"id": str(evidence.id), "source_type": source_type})
+    report.structured_json = {**report.structured_json, "evidence": evidence_ids}
     database_session.commit()
     return report
 
@@ -128,6 +134,71 @@ def test_report_detail_returns_json_source_of_truth_and_evidence(
         "private_knowledge",
         "model_inference",
     }
+
+
+def test_report_evidence_and_exports_use_the_report_snapshot(client, database_session):
+    user = _authenticate(client, database_session, "reports-snapshot@example.com")
+    report = _create_report(database_session, user)
+    database_session.add(
+        TaskEvidence(
+            user_id=user.id,
+            space_id=report.space_id,
+            task_id=report.task_id,
+            source_type="web",
+            source_title="Added after report completion",
+            source_url="https://example.com/later",
+            quote="Must not appear in the report snapshot.",
+            retrieved_at=datetime.now(UTC),
+        )
+    )
+    database_session.commit()
+    database_session.expire_all()
+
+    evidence = client.get(f"/api/v1/reports/{report.id}/evidence")
+    pdf = client.get(f"/api/v1/reports/{report.id}/export/pdf")
+    docx = client.get(f"/api/v1/reports/{report.id}/export/docx")
+
+    assert evidence.status_code == pdf.status_code == docx.status_code == 200
+    assert {item["source_title"] for item in evidence.json()} == {
+        "Web source",
+        "Private brief",
+        "Inference",
+    }
+    assert "Added after report completion" not in "".join(
+        page.extract_text() or "" for page in PdfReader(BytesIO(pdf.content)).pages
+    )
+    assert "Added after report completion" not in "\n".join(
+        paragraph.text for paragraph in Document(BytesIO(docx.content)).paragraphs
+    )
+
+
+def test_docx_export_creates_external_hyperlinks_for_safe_evidence_urls(
+    client, database_session
+):
+    user = _authenticate(client, database_session, "reports-docx-links@example.com")
+    report = _create_report(database_session, user)
+
+    response = client.get(f"/api/v1/reports/{report.id}/export/docx")
+
+    assert response.status_code == 200
+    document = Document(BytesIO(response.content))
+    hyperlinks = [
+        relationship
+        for relationship in document.part.rels.values()
+        if relationship.reltype == RT.HYPERLINK
+    ]
+    assert [(link.target_ref, link.is_external) for link in hyperlinks] == [
+        ("https://example.com/web", True)
+    ]
+    with ZipFile(BytesIO(response.content)) as archive:
+        document_xml = ElementTree.fromstring(archive.read("word/document.xml"))
+    hyperlink_ids = {
+        element.attrib["{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"]
+        for element in document_xml.findall(
+            ".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink"
+        )
+    }
+    assert hyperlink_ids == {hyperlinks[0].rId}
 
 
 @pytest.mark.parametrize(
