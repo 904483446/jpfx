@@ -53,7 +53,11 @@ def _evidence(
             )
         )
     }
-    return [evidence_by_id[evidence_id] for evidence_id in snapshot_ids if evidence_id in evidence_by_id]
+    return [
+        evidence_by_id[evidence_id]
+        for evidence_id in snapshot_ids
+        if evidence_id in evidence_by_id
+    ]
 
 
 @router.get("/{report_id}", response_model=ReportResponse)

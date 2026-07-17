@@ -100,15 +100,15 @@ def _create_report(database_session: Session, user: User) -> CompetitorReport:
         ("model_inference", "Inference", None),
     ]:
         evidence = TaskEvidence(
-                user_id=user.id,
-                space_id=space.id,
-                task_id=task.id,
-                source_type=source_type,
-                source_title=title,
-                source_url=url,
-                quote="Evidence quote",
-                retrieved_at=datetime.now(UTC),
-            )
+            user_id=user.id,
+            space_id=space.id,
+            task_id=task.id,
+            source_type=source_type,
+            source_title=title,
+            source_url=url,
+            quote="Evidence quote",
+            retrieved_at=datetime.now(UTC),
+        )
         database_session.add(evidence)
         database_session.flush()
         evidence_ids.append({"id": str(evidence.id), "source_type": source_type})
@@ -193,7 +193,9 @@ def test_docx_export_creates_external_hyperlinks_for_safe_evidence_urls(
     with ZipFile(BytesIO(response.content)) as archive:
         document_xml = ElementTree.fromstring(archive.read("word/document.xml"))
     hyperlink_ids = {
-        element.attrib["{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"]
+        element.attrib[
+            "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+        ]
         for element in document_xml.findall(
             ".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink"
         )
