@@ -10,6 +10,7 @@ from app.api.v1.documents import documents_router
 from app.api.v1.documents import spaces_router as documents_spaces_router
 from app.api.v1.health import router as health_router
 from app.api.v1.model_configs import router as model_configs_router
+from app.api.v1.reports import router as reports_router
 from app.api.v1.retrieval import router as retrieval_router
 from app.api.v1.spaces import router as spaces_router
 from app.core.config import settings
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     application.include_router(documents_spaces_router, prefix=settings.api_v1_prefix)
     application.include_router(documents_router, prefix=settings.api_v1_prefix)
     application.include_router(retrieval_router, prefix=settings.api_v1_prefix)
+    application.include_router(reports_router, prefix=settings.api_v1_prefix)
     return application
 
 
