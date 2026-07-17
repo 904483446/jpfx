@@ -170,7 +170,13 @@ def _append_pdf_evidence(story, evidence, heading, body) -> None:
             )
         for entry in entries:
             url = _text(entry.source_url)
-            link = _link(url) if _is_safe_external_url(url) else _xml(url) if url else "无链接"
+            link = (
+                _link(url)
+                if _is_safe_external_url(url)
+                else _xml(url)
+                if url
+                else "无链接"
+            )
             rows.append(
                 [
                     Paragraph(_LABELS[source_type], cell),
