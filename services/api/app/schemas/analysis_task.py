@@ -36,6 +36,13 @@ class CandidateResponse(BaseModel):
     source_type: str
     is_selected: bool
     sort_order: int | None
+    evidence: list["CandidateEvidenceResponse"] = Field(default_factory=list)
+
+
+class CandidateEvidenceResponse(BaseModel):
+    source_title: str
+    source_url: str | None
+    excerpt: str | None
 
 
 class CompetitorSelectionRequest(BaseModel):

@@ -11,8 +11,10 @@ from app.schemas.analysis_task import (
     AnalysisTaskCreateRequest,
     AnalysisTaskResponse,
     CandidateResponse,
+    CandidateEvidenceResponse,
     CompetitorSelectionRequest,
 )
+from app.models import TaskEvidence
 from app.services.analysis_runner import run_analysis_task
 from app.services.analysis_task_service import (
     auto_select_competitors,
@@ -32,10 +34,14 @@ tasks_router = APIRouter(prefix="/analysis-tasks", tags=["analysis-tasks"])
 
 def _task_response(database_session: Session, task) -> AnalysisTaskResponse:
     response = AnalysisTaskResponse.model_validate(task)
-    response.candidates = [
-        CandidateResponse.model_validate(candidate)
-        for candidate in list_task_candidates(database_session, task)
-    ]
+    response.candidates = []
+    for candidate in list_task_candidates(database_session, task):
+        candidate_response = CandidateResponse.model_validate(candidate)
+        candidate_response.evidence = [
+            CandidateEvidenceResponse(source_title=evidence.source_title, source_url=evidence.source_url, excerpt=evidence.quote)
+            for evidence in database_session.query(TaskEvidence).filter(TaskEvidence.task_id == task.id, TaskEvidence.candidate_id == candidate.id, TaskEvidence.source_type == "web").all()
+        ]
+        response.candidates.append(candidate_response)
     return response
 
 
