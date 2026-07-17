@@ -238,8 +238,11 @@ def _link(url: str) -> str:
 
 
 def _is_safe_external_url(url: str) -> bool:
-    parsed = urlparse(url)
-    return parsed.scheme.lower() in {"http", "https"} and bool(parsed.netloc)
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme.lower() in {"http", "https"} and bool(parsed.hostname)
+    except ValueError:
+        return False
 
 
 def _footer(title: str):

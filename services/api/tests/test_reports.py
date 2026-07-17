@@ -212,7 +212,16 @@ def test_pdf_export_escapes_untrusted_report_and_evidence_text(
     assert "<unclosed" in text
 
 
-@pytest.mark.parametrize("unsafe_url", ["javascript:alert(1)", "file:///etc/passwd", "data:text/html,unsafe"])
+@pytest.mark.parametrize(
+    "unsafe_url",
+    [
+        "javascript:alert(1)",
+        "file:///etc/passwd",
+        "data:text/html,unsafe",
+        "http://:80",
+        "https://@",
+    ],
+)
 def test_pdf_export_does_not_create_links_for_unsafe_evidence_urls(
     client, database_session, unsafe_url
 ):
