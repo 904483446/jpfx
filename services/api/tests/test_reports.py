@@ -182,3 +182,31 @@ def test_other_user_cannot_read_or_download_report(client, database_session):
     ):
         response = client.get(endpoint)
         assert response.status_code == 404
+
+
+def test_pdf_export_escapes_untrusted_report_and_evidence_text(
+    client, database_session
+):
+    user = _authenticate(client, database_session, "reports-xml@example.com")
+    report = _create_report(database_session, user)
+    report.title = "<unclosed report>"
+    report.structured_json["executive_summary"] = "<b>summary</b> & details"
+    report.structured_json["competitors"][0]["name"] = "<b>Competitor</b>"
+    report.structured_json["competitors"][0]["recommendations"] = ["<unclosed"]
+    evidence = (
+        database_session.query(TaskEvidence).filter_by(task_id=report.task_id).first()
+    )
+    assert evidence is not None
+    evidence.source_title = "<b>web evidence</b>"
+    evidence.source_url = "https://example.com/?q=<unclosed"
+    database_session.commit()
+
+    response = client.get(f"/api/v1/reports/{report.id}/export/pdf")
+
+    assert response.status_code == 200
+    text = "".join(
+        page.extract_text() or "" for page in PdfReader(BytesIO(response.content)).pages
+    )
+    assert "<unclosed report>" in text
+    assert "<b>Competitor</b>" in text
+    assert "<unclosed" in text

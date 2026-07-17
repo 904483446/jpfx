@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from html import escape
 from io import BytesIO
 from typing import Any
 
@@ -35,11 +36,15 @@ def build_pdf(report: CompetitorReport, evidence: Iterable[TaskEvidence]) -> byt
     body = ParagraphStyle(
         "ChineseBody", parent=styles["BodyText"], fontName="STSong-Light"
     )
-    story: list[Any] = [Paragraph(report.title, title), Spacer(1, 8)]
+    story: list[Any] = [Paragraph(_xml(report.title), title), Spacer(1, 8)]
     content = report.structured_json
     if summary := _text(content.get("executive_summary")):
         story.extend(
-            [Paragraph("执行摘要", heading), Paragraph(summary, body), Spacer(1, 8)]
+            [
+                Paragraph("执行摘要", heading),
+                Paragraph(_xml(summary), body),
+                Spacer(1, 8),
+            ]
         )
     competitors = _competitors(content)
     if competitors:
@@ -49,12 +54,17 @@ def build_pdf(report: CompetitorReport, evidence: Iterable[TaskEvidence]) -> byt
     recommendations = _recommendations(competitors)
     if recommendations:
         story.append(Paragraph("建议", heading))
-        story.extend(Paragraph(f"• {item}", body) for item in recommendations)
+        story.extend(Paragraph(f"• {_xml(item)}", body) for item in recommendations)
         story.append(Spacer(1, 8))
     _append_pdf_evidence(story, evidence, heading, body)
-    SimpleDocTemplate(
+    document = SimpleDocTemplate(
         buffer, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm
-    ).build(story)
+    )
+    document.build(
+        story,
+        onFirstPage=_footer(report.title),
+        onLaterPages=_footer(report.title),
+    )
     return buffer.getvalue()
 
 
@@ -110,14 +120,20 @@ def _recommendations(competitors: Iterable[dict[str, object]]) -> list[str]:
 
 
 def _table(competitors: list[dict[str, object]]) -> Table:
-    rows = [["竞品", "定位", "核心功能", "优势"]]
+    style = ParagraphStyle("TableCell", fontName="STSong-Light", fontSize=8, leading=11)
+    rows = [
+        [
+            Paragraph(_xml(label), style)
+            for label in ("竞品", "定位", "核心功能", "优势")
+        ]
+    ]
     rows.extend(
         [
             [
-                _text(item.get("name")),
-                _text(item.get("positioning")),
-                "、".join(_strings(item.get("core_features"))),
-                "、".join(_strings(item.get("strengths"))),
+                Paragraph(_xml(_text(item.get("name"))), style),
+                Paragraph(_xml(_text(item.get("positioning"))), style),
+                Paragraph(_xml("、".join(_strings(item.get("core_features")))), style),
+                Paragraph(_xml("、".join(_strings(item.get("strengths")))), style),
             ]
             for item in competitors
         ]
@@ -138,14 +154,44 @@ def _table(competitors: list[dict[str, object]]) -> Table:
 
 def _append_pdf_evidence(story, evidence, heading, body) -> None:
     story.append(Paragraph("证据链接", heading))
+    cell = ParagraphStyle("EvidenceCell", parent=body, fontSize=8, leading=11)
+    rows = [
+        [Paragraph("证据类型", cell), Paragraph("来源", cell), Paragraph("链接", cell)]
+    ]
     for source_type, entries in _group(evidence).items():
-        story.append(Paragraph(_LABELS[source_type], body))
         if not entries:
-            story.append(Paragraph("暂无", body))
-        story.extend(
-            Paragraph(f"• {entry.source_title}: {entry.source_url or '无链接'}", body)
-            for entry in entries
+            rows.append(
+                [
+                    Paragraph(_LABELS[source_type], cell),
+                    Paragraph("暂无", cell),
+                    Paragraph("", cell),
+                ]
+            )
+        for entry in entries:
+            url = _text(entry.source_url)
+            link = _link(url) if url else "无链接"
+            rows.append(
+                [
+                    Paragraph(_LABELS[source_type], cell),
+                    Paragraph(_xml(entry.source_title), cell),
+                    Paragraph(link, cell),
+                ]
+            )
+    table = Table(rows, colWidths=[32 * mm, 58 * mm, 74 * mm], repeatRows=1)
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E8EEF8")),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
         )
+    )
+    story.append(table)
 
 
 def _append_docx_evidence(document: Document, evidence: Iterable[TaskEvidence]) -> None:
@@ -179,3 +225,25 @@ def _strings(value: object) -> list[str]:
 
 def _text(value: object) -> str:
     return value if isinstance(value, str) else ""
+
+
+def _xml(value: str) -> str:
+    return escape(value, quote=True)
+
+
+def _link(url: str) -> str:
+    escaped = _xml(url)
+    return f'<link href="{escaped}">{escaped}</link>'
+
+
+def _footer(title: str):
+    safe_title = title.replace("\r", " ").replace("\n", " ")[:80]
+
+    def draw_footer(canvas, document) -> None:
+        canvas.saveState()
+        canvas.setFont("STSong-Light", 8)
+        canvas.drawString(18 * mm, 12 * mm, safe_title)
+        canvas.drawRightString(A4[0] - 18 * mm, 12 * mm, f"第 {document.page} 页")
+        canvas.restoreState()
+
+    return draw_footer
