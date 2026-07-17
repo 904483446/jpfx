@@ -6,15 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db_session
-from app.models import User
+from app.models import TaskEvidence, User
 from app.schemas.analysis_task import (
     AnalysisTaskCreateRequest,
     AnalysisTaskResponse,
-    CandidateResponse,
     CandidateEvidenceResponse,
+    CandidateResponse,
     CompetitorSelectionRequest,
 )
-from app.models import TaskEvidence
 from app.services.analysis_runner import run_analysis_task
 from app.services.analysis_task_service import (
     auto_select_competitors,
@@ -38,8 +37,18 @@ def _task_response(database_session: Session, task) -> AnalysisTaskResponse:
     for candidate in list_task_candidates(database_session, task):
         candidate_response = CandidateResponse.model_validate(candidate)
         candidate_response.evidence = [
-            CandidateEvidenceResponse(source_title=evidence.source_title, source_url=evidence.source_url, excerpt=evidence.quote)
-            for evidence in database_session.query(TaskEvidence).filter(TaskEvidence.task_id == task.id, TaskEvidence.candidate_id == candidate.id, TaskEvidence.source_type == "web").all()
+            CandidateEvidenceResponse(
+                source_title=evidence.source_title,
+                source_url=evidence.source_url,
+                excerpt=evidence.quote,
+            )
+            for evidence in database_session.query(TaskEvidence)
+            .filter(
+                TaskEvidence.task_id == task.id,
+                TaskEvidence.candidate_id == candidate.id,
+                TaskEvidence.source_type == "web",
+            )
+            .all()
         ]
         response.candidates.append(candidate_response)
     return response
@@ -128,8 +137,10 @@ def get_task(
 @tasks_router.post("/{task_id}/retry", response_model=AnalysisTaskResponse)
 def retry_task(
     task_id: UUID,
+    background_tasks: BackgroundTasks,
     current_user: Annotated[User, Depends(get_current_user)],
     database_session: Annotated[Session, Depends(get_db_session)],
 ) -> AnalysisTaskResponse:
     task = retry_analysis_task(database_session, current_user, task_id)
+    background_tasks.add_task(run_analysis_task, task.id)
     return _task_response(database_session, task)

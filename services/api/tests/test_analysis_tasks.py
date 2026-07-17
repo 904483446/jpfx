@@ -133,8 +133,10 @@ def test_manual_selection_requires_one_to_three_candidates_owned_by_task(
 
 
 def test_auto_selects_at_most_three_candidates_with_web_evidence_and_retry_is_guarded(
-    client: TestClient, database_session: Session
+    client: TestClient, database_session: Session, monkeypatch: pytest.MonkeyPatch
 ):
+    from app.api.v1 import analysis_tasks
+
     user = authenticate(client, database_session, "auto-owner@example.com")
     space = create_space(client)
     task_payload = create_task(client, space["id"])
@@ -187,6 +189,7 @@ def test_auto_selects_at_most_three_candidates_with_web_evidence_and_retry_is_gu
 
     task.status = "failed"
     database_session.commit()
+    monkeypatch.setattr(analysis_tasks, "run_analysis_task", lambda task_id: None)
     retried = client.post(f"/api/v1/analysis-tasks/{task.id}/retry")
     assert retried.status_code == 200
     assert retried.json()["status"] == "queued"
@@ -225,5 +228,31 @@ def test_run_queues_task_and_schedules_background_work_by_task_id(
     response = client.post(f"/api/v1/analysis-tasks/{task.id}/run")
 
     assert response.status_code == 202
+    assert response.json()["status"] == "queued"
+    assert scheduled_task_ids == [task.id]
+
+
+def test_retry_queues_failed_task_and_schedules_background_work_by_task_id(
+    client: TestClient, database_session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    from app.api.v1 import analysis_tasks
+
+    authenticate(client, database_session, "retry-owner@example.com")
+    space = create_space(client)
+    task_payload = create_task(client, space["id"])
+    task = database_session.get(AnalysisTask, task_payload["id"])
+    assert task is not None
+    task.status = "failed"
+    database_session.commit()
+    scheduled_task_ids = []
+    monkeypatch.setattr(
+        analysis_tasks,
+        "run_analysis_task",
+        lambda task_id: scheduled_task_ids.append(task_id),
+    )
+
+    response = client.post(f"/api/v1/analysis-tasks/{task.id}/retry")
+
+    assert response.status_code == 200
     assert response.json()["status"] == "queued"
     assert scheduled_task_ids == [task.id]
