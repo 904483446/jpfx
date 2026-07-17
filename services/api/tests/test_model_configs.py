@@ -164,6 +164,34 @@ def test_short_api_key_hint_does_not_expose_the_full_key(
     assert response.json()["api_key_hint"] == "********"
 
 
+def test_overlong_api_key_validation_error_does_not_expose_key(
+    client: TestClient, database_session: Session
+):
+    authenticate(client, database_session, "overlong-key@example.com")
+    api_key = "secret-" * 74
+
+    response = client.put(
+        "/api/v1/model-configs/deepseek",
+        json={"api_key": api_key},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert api_key not in response.text
+    assert "input" not in response.json()["error"]["details"]["errors"][0]
+
+
+def test_other_validation_errors_keep_their_input_details(
+    client: TestClient, database_session: Session
+):
+    authenticate(client, database_session, "ordinary-validation@example.com")
+
+    response = client.post("/api/v1/spaces", json={"name": ""})
+
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["errors"][0]["input"] == ""
+
+
 def test_users_cannot_read_each_others_model_config(
     client: TestClient, database_session: Session
 ):
