@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import Home from "./page";
@@ -16,5 +16,11 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "把竞品洞察变成可验证的决策。" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "产品介绍" })).toHaveAttribute("href", "#product");
+
+    const workflowPreview = screen.getByRole("region", { name: "产品流程预览" });
+    expect(within(workflowPreview).getByText("资料入库")).toBeInTheDocument();
+    expect(within(workflowPreview).getByText("分析任务")).toBeInTheDocument();
+    expect(within(workflowPreview).getByText("报告交付")).toBeInTheDocument();
   });
 });
