@@ -9,6 +9,6 @@ describe("StatusStamp", () => {
     render(<StatusStamp status="indexed" />);
 
     expect(screen.getByText("已索引")).toBeInTheDocument();
-    expect(screen.getByLabelText("文档状态：已索引")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "文档状态：已索引" })).toBeInTheDocument();
   });
 });
