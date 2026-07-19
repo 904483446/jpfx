@@ -16,6 +16,23 @@ const space = { id: "space-1", name: "企业知识库 Copilot", industry: "企�
 describe("DashboardSpaces", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
+  it("shows a loading skeleton before the product spaces arrive", async () => {
+    listSpaces.mockImplementationOnce(() => new Promise(() => undefined));
+    render(<DashboardSpaces user={currentUser} />);
+
+    expect(screen.getByTestId("space-list-skeleton")).toBeInTheDocument();
+  });
+
+  it("gives an empty workspace a primary action to create its first product space", async () => {
+    const user = userEvent.setup();
+    listSpaces.mockResolvedValueOnce([]);
+    render(<DashboardSpaces user={currentUser} />);
+
+    await screen.findByText("还没有产品空间");
+    await user.click(screen.getByRole("button", { name: "创建第一个产品空间" }));
+    expect(screen.getByRole("dialog", { name: "新建产品空间" })).toBeInTheDocument();
+  });
+
   it("renders current user and returned space cards", async () => {
     listSpaces.mockResolvedValueOnce([space]);
     render(<DashboardSpaces user={currentUser} />);

@@ -14,6 +14,15 @@ const space = { id: "space-1", name: "企业知识库 Copilot", industry: null, 
 describe("SpaceCreateDialog", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
+  it("keeps the original field ids in the dossier dialog", () => {
+    render(<SpaceCreateDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+
+    expect(screen.getByLabelText("空间名称")).toHaveAttribute("id", "space-name");
+    expect(screen.getByLabelText("行业")).toHaveAttribute("id", "space-industry");
+    expect(screen.getByLabelText("产品方向")).toHaveAttribute("id", "space-product-direction");
+    expect(screen.getByLabelText("描述")).toHaveAttribute("id", "space-description");
+  });
+
   it("does not request creation when the name is blank", async () => {
     const user = userEvent.setup();
     render(<SpaceCreateDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);

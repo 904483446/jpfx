@@ -1,8 +1,33 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 
-const navigationItems = ["概览", "产品空间", "知识库", "设置"];
+const navigationItems = [
+  { href: "/app", label: "工作台", note: "空间总览" },
+  { href: "/app/spaces", label: "产品空间", note: "资料与洞察" },
+  { href: "/app/tasks", label: "分析任务", note: "研究队列" },
+  { href: "/app/reports", label: "报告中心", note: "交付归档" },
+  { href: "/app/settings", label: "设置", note: "账号与模型" },
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  return <main className="min-h-screen bg-[#f6f9fb] text-[#0a1f33]"><header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6"><BrandMark /><span className="text-sm text-slate-500">未登录状态占位</span></header><div className="flex min-h-[calc(100vh-4rem)]"><aside className="w-52 bg-[#0a1f33] px-4 py-6 text-slate-200"><section aria-label="应用功能占位"><p className="px-3 pb-3 text-xs font-medium text-slate-400">应用功能占位</p><ul className="space-y-1">{navigationItems.map((item, index) => <li className={index === 0 ? "rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white" : "rounded-lg px-3 py-2 text-sm"} key={item}>{item}</li>)}</ul></section></aside><section className="flex-1 p-6 md:p-10">{children}</section></div></main>;
+  return (
+    <main className="app-dossier min-h-screen bg-background text-foreground" data-testid="app-dossier">
+      <div className="grid min-h-screen lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <aside aria-label="主导航" className="border-b border-border bg-card lg:border-r lg:border-b-0">
+          <div className="flex h-full flex-col px-5 py-6 lg:sticky lg:top-0 lg:min-h-screen">
+            <BrandMark />
+            <nav aria-label="主导航" className="mt-10">
+              <p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">目录</p>
+              <ul className="mt-3 space-y-1">
+                {navigationItems.map((item) => <li key={item.href}><Link className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-border hover:bg-muted focus-visible:border-ring" href={item.href}><span className="block text-sm font-medium">{item.label}</span><span className="mt-0.5 block text-xs text-muted-foreground group-hover:text-foreground">{item.note}</span></Link></li>)}
+              </ul>
+            </nav>
+            <p className="mt-auto hidden border-t border-border pt-4 text-xs leading-5 text-muted-foreground lg:block">以可追溯证据组织每一次竞品研究。</p>
+          </div>
+        </aside>
+        <div className="min-w-0"><header className="context-bar flex min-h-16 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-8" data-testid="context-bar"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">竞品智研台</p><p className="text-sm font-medium">工作台 / 产品空间</p></div><Link className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/app/settings">账户设置</Link></header><section aria-label="主内容" className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</section></div>
+      </div>
+    </main>
+  );
 }

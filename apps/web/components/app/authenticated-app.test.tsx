@@ -12,11 +12,26 @@ vi.mock("@/lib/auth", () => ({ getCurrentUser }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
 import { AuthenticatedApp } from "./authenticated-app";
+import { AppShell } from "@/components/app-shell";
 
 describe("AuthenticatedApp", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  it("renders the dossier shell navigation and authentication skeleton", async () => {
+    let resolveUser: (value: { id: string; email: string; display_name: string; is_admin: boolean; created_at: string; updated_at: string }) => void;
+    getCurrentUser.mockImplementationOnce(() => new Promise((resolve) => { resolveUser = resolve; }));
+    render(<AppShell><AuthenticatedApp /></AppShell>);
+
+    expect(screen.getByRole("navigation", { name: "主导航" })).toBeInTheDocument();
+    expect(screen.getByTestId("context-bar")).toHaveTextContent("工作台");
+    expect(screen.getByTestId("auth-loading-skeleton")).toBeInTheDocument();
+
+    await waitFor(() => expect(getCurrentUser).toHaveBeenCalledTimes(1));
+    resolveUser!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
+    expect((await screen.findByTestId("app-dossier")).tagName).toBe("MAIN");
   });
 
   it("验证完成后显示当前用户信息", async () => {
