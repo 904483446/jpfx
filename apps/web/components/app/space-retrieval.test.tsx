@@ -19,7 +19,7 @@ import { SpaceRetrieval } from "./space-retrieval";
 describe("SpaceRetrieval", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-  it("renders returned source snippets", async () => {
+  it("renders returned source snippets with a similarity score, not a confidence claim", async () => {
     const interaction = userEvent.setup();
     getCurrentUser.mockResolvedValueOnce({ id: "user-1" });
     searchSpaceDocuments.mockResolvedValueOnce({
@@ -32,6 +32,8 @@ describe("SpaceRetrieval", () => {
 
     expect(await screen.findByText("目标用户是小型团队")).toBeInTheDocument();
     expect(screen.getByText(/brief.md.*片段 3.*0.92/)).toBeInTheDocument();
+    expect(screen.getAllByText(/相似度 0.92/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/可信度/)).not.toBeInTheDocument();
   });
 
   it("shows a Chinese empty-result hint", async () => {

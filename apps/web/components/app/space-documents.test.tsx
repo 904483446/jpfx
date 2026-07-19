@@ -39,6 +39,14 @@ describe("SpaceDocuments", () => {
     expect(screen.getByText(/PDF.*2048 B.*2026/)).toBeInTheDocument();
   });
 
+  it("exposes an indexed document with the shared accessible status stamp", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([{ ...document, status: "indexed" }]);
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    expect(await screen.findByRole("status", { name: "文档状态：已索引" })).toBeInTheDocument();
+  });
+
   it("redirects an unauthenticated visitor", async () => {
     getCurrentUser.mockRejectedValueOnce(new ApiClientError("UNAUTHORIZED", "登录状态无效或已过期"));
     render(<SpaceDocuments spaceId="space-1" />);
