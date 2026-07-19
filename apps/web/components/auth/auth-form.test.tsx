@@ -15,6 +15,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth", () => ({ register, login }));
 
 import { AuthForm } from "./auth-form";
+import { AuthShell } from "./auth-shell";
 import { ApiClientError } from "@/lib/api-client";
 
 const fillRegisterForm = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -132,5 +133,18 @@ describe("AuthForm", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(login).not.toHaveBeenCalled();
+  });
+});
+
+describe("AuthShell", () => {
+  it("renders the evidence-first intelligence workspace dossier", () => {
+    const { container } = render(
+      <AuthShell description="说明" footer={<span>页脚</span>} title="登录">
+        <AuthForm mode="login" />
+      </AuthShell>,
+    );
+
+    expect(screen.getByText("证据优先的竞争情报工作台")).toBeInTheDocument();
+    expect(container.querySelector("main.auth-dossier")).toBeInTheDocument();
   });
 });
