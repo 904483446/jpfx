@@ -6,7 +6,7 @@ type AuthShellProps = { title: string; description: string; children: ReactNode;
 export function AuthShell({ title, description, children, footer }: AuthShellProps) {
   return (
     <main className="auth-dossier min-h-screen bg-background p-4 text-foreground sm:p-8 lg:grid lg:place-items-center">
-      <div className="auth-dossier-cover mx-auto grid w-full max-w-5xl overflow-hidden border border-border bg-card shadow-[0_20px_60px_rgb(31_27_23_/_0.12)] lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)]">
+      <div className="auth-dossier-cover mx-auto grid w-full max-w-5xl overflow-hidden border border-border bg-card shadow-xl dark:shadow-2xl lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)]">
         <aside className="auth-dossier-brief relative border-b border-border bg-secondary p-7 sm:p-10 lg:border-r lg:border-b-0 lg:p-12">
           <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
           <BrandMark />
