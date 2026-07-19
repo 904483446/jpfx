@@ -146,5 +146,19 @@ describe("AuthShell", () => {
 
     expect(screen.getByText("证据优先的竞争情报工作台")).toBeInTheDocument();
     expect(container.querySelector("main.auth-dossier")).toBeInTheDocument();
+    expect(container.querySelector(".auth-dossier-cover")).toBeInTheDocument();
+    expect(container.querySelector(".auth-dossier-form")).toBeInTheDocument();
+  });
+
+  it("keeps the credential field identifiers and autocomplete contract", () => {
+    cleanup();
+    render(<AuthForm mode="register" />);
+
+    expect(screen.getByLabelText("昵称")).toHaveAttribute("id", "display-name");
+    expect(screen.getByLabelText("昵称")).toHaveAttribute("autocomplete", "name");
+    expect(screen.getByLabelText("邮箱地址")).toHaveAttribute("id", "email");
+    expect(screen.getByLabelText("邮箱地址")).toHaveAttribute("autocomplete", "email");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("id", "password");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("autocomplete", "new-password");
   });
 });
