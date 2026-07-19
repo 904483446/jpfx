@@ -30,8 +30,12 @@ describe("AuthenticatedApp", () => {
     expect(screen.getByTestId("auth-loading-skeleton")).toBeInTheDocument();
 
     await waitFor(() => expect(getCurrentUser).toHaveBeenCalledTimes(1));
-    resolveUser!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
-    expect((await screen.findByTestId("app-dossier")).tagName).toBe("MAIN");
+    await act(async () => {
+      resolveUser!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
+    });
+    expect(await screen.findByRole("heading")).toBeInTheDocument();
+    expect(await screen.findByText("user@example.com")).toBeInTheDocument();
+    expect(screen.queryByTestId("auth-loading-skeleton")).not.toBeInTheDocument();
   });
 
   it("验证完成后显示当前用户信息", async () => {

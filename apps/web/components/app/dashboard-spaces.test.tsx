@@ -21,6 +21,7 @@ describe("DashboardSpaces", () => {
     render(<DashboardSpaces user={currentUser} />);
 
     expect(screen.getByTestId("space-list-skeleton")).toBeInTheDocument();
+    await waitFor(() => expect(listSpaces).toHaveBeenCalledTimes(1));
   });
 
   it("gives an empty workspace a primary action to create its first product space", async () => {
