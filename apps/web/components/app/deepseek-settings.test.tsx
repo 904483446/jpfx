@@ -32,6 +32,7 @@ describe("DeepSeekSettings", () => {
     });
     render(<DeepSeekSettings />);
 
+    expect(await screen.findByText("待配置")).toBeInTheDocument();
     await interaction.type(await screen.findByLabelText("DeepSeek API Key"), "sk-secret");
     await interaction.click(screen.getByRole("button", { name: "保存配置" }));
 
