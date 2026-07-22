@@ -42,4 +42,3 @@ export function ReportDetail({ reportId }: { reportId: string }) {
     </div>
   </section>;
 }
-
