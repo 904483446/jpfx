@@ -24,8 +24,16 @@ describe("AnalysisTaskStatus", () => {
   it("retries a failed task once while disabling duplicate submission", async () => {
     const interaction = userEvent.setup(); getAnalysisTask.mockResolvedValueOnce(failedTask); retryAnalysisTask.mockImplementationOnce(() => new Promise(() => {}));
     render(<AnalysisTaskStatus taskId="task-1" />);
-    const retry = await screen.findByRole("button", { name: "Retry analysis" });
+    const retry = await screen.findByRole("button", { name: "重新分析" });
     await interaction.click(retry);
     expect(retry).toBeDisabled(); expect(retryAnalysisTask).toHaveBeenCalledWith("task-1");
+  });
+
+  it("renders a Chinese stage timeline from the task status and failure stage", async () => {
+    getAnalysisTask.mockResolvedValueOnce(failedTask);
+    render(<AnalysisTaskStatus taskId="task-1" />);
+    expect(await screen.findByText("分析进度")).toBeInTheDocument();
+    expect(screen.getByText("模型调用失败")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "重新分析" })).toBeInTheDocument();
   });
 });
