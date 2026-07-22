@@ -52,6 +52,7 @@ describe("DeepSeekSettings", () => {
     const input = await screen.findByLabelText("DeepSeek API Key");
     expect(input).toHaveAttribute("type", "password");
     expect(input).toHaveAttribute("autocomplete", "off");
+    expect(screen.getByText("已配置")).toBeInTheDocument();
     expect(screen.getByText(/服务端返回的脱敏状态/)).toBeInTheDocument();
     expect(screen.queryByText("sk-secret")).not.toBeInTheDocument();
   });

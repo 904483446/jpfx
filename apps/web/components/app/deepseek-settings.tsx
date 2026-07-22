@@ -79,7 +79,7 @@ export function DeepSeekSettings() {
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">密钥仅用于本次提交。页面不回显、不写入浏览器本地存储，只展示服务端返回的脱敏状态。</p>
             </div>
             <span className={`inline-flex w-fit items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${configured ? "border-primary/25 bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-              {configured ? "已归档" : "待配置"}
+              {configured ? "已配置" : "待配置"}
             </span>
           </div>
         </header>
