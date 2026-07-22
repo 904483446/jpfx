@@ -36,4 +36,17 @@ describe("AnalysisTaskStatus", () => {
     expect(screen.getByText("模型调用失败")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重新分析" })).toBeInTheDocument();
   });
+
+  it.each([
+    ["retrieving_private_knowledge", "私有知识检索", "证据采集"],
+    ["analyzing", "正在模型分析", "模型调用"],
+    ["failed", "分析失败", "模型调用"],
+  ])("maps backend stage %s to a Chinese label at the correct timeline position", async (stage, label, activeTimelineStage) => {
+    getAnalysisTask.mockResolvedValueOnce({ ...failedTask, status: stage === "failed" ? "failed" : "running", stage });
+    render(<AnalysisTaskStatus taskId="task-1" />);
+
+    expect(await screen.findAllByText(label)).not.toHaveLength(0);
+    expect(screen.getByText(activeTimelineStage)).toHaveClass("font-medium");
+    expect(screen.queryByText(stage)).not.toBeInTheDocument();
+  });
 });

@@ -8,16 +8,28 @@ import { getAnalysisTask, retryAnalysisTask, type AnalysisTask } from "@/lib/ana
 
 const statusLabels: Record<AnalysisTask["status"], string> = { draft: "待确认", queued: "已进入队列", running: "分析中", completed: "分析完成", failed: "分析失败" };
 const stages = ["任务已创建", "候选确认", "分析准备", "证据采集", "模型调用", "报告生成"];
+const backendStageLabels: Record<string, string> = {
+  retrieving_private_knowledge: "私有知识检索",
+  analyzing: "正在模型分析",
+  failed: "分析失败",
+};
 
 function stagePosition(task: AnalysisTask) {
   if (task.status === "completed") return stages.length - 1;
   if (task.status === "draft") return 1;
   if (task.status === "queued") return 2;
   const stage = task.stage ?? "";
+  if (stage === "retrieving_private_knowledge") return 3;
+  if (stage === "analyzing" || stage === "failed") return 4;
   if (stage.includes("报告")) return 5;
   if (stage.includes("模型")) return 4;
   if (stage.includes("证据") || stage.includes("检索")) return 3;
   return task.status === "failed" ? 4 : 2;
+}
+
+function stageLabel(task: AnalysisTask, activeStage: number) {
+  const stage = task.stage ?? "";
+  return backendStageLabels[stage] ?? (stage || stages[activeStage]);
 }
 
 export function AnalysisTaskStatus({ taskId }: { taskId: string }) {
@@ -46,7 +58,7 @@ export function AnalysisTaskStatus({ taskId }: { taskId: string }) {
       {task && <p className="rounded-full bg-muted px-3 py-1 text-sm font-medium">{statusLabels[task.status]}</p>}
     </div>
     {task && <><div className="mt-6 border-t border-border pt-5"><p className="text-sm font-medium">分析进度</p><ol className="mt-4 grid gap-3 sm:grid-cols-3">{stages.map((stage, index) => <li className="flex items-center gap-2 text-sm" key={stage}><span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs ${index <= activeStage ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{index + 1}</span><span className={index === activeStage ? "font-medium" : "text-muted-foreground"}>{stage}</span></li>)}</ol></div>
-      <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm"><p className="font-medium">{task.status === "failed" ? "失败阶段" : "当前阶段"}</p><p className="mt-1 text-muted-foreground">{task.stage ?? stages[activeStage]}</p></div>
+      <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm"><p className="font-medium">{task.status === "failed" ? "失败阶段" : "当前阶段"}</p><p className="mt-1 text-muted-foreground">{stageLabel(task, activeStage)}</p></div>
       {task.status === "completed" && <p className="mt-4 text-sm text-emerald-700 dark:text-emerald-300">报告已生成，可继续查看分析结论。</p>}
       {task.status === "failed" && <Button className="mt-4" disabled={isRetrying} onClick={() => void retry()} type="button">{isRetrying ? "正在重新分析…" : "重新分析"}</Button>}
     </>}
