@@ -39,6 +39,34 @@ describe("SpaceDocuments", () => {
     expect(screen.getByText(/PDF.*2048 B.*2026/)).toBeInTheDocument();
   });
 
+  it("uses the evidence-desk semantic palette for document archives", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([document]);
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    const heading = await screen.findByRole("heading", { name: "文档管理" });
+    expect(heading.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
+    expect(screen.getByText("brief.pdf").closest("li")?.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
+  });
+
+  it("uses the semantic destructive token for request errors", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockRejectedValueOnce(new ApiClientError("NETWORK_ERROR", "资料暂时不可用"));
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("资料暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
+  });
+
+  it("exposes an indexed document with the shared accessible status stamp", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([{ ...document, status: "indexed" }]);
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    expect(await screen.findByRole("status", { name: "文档状态：已索引" })).toBeInTheDocument();
+  });
+
   it("redirects an unauthenticated visitor", async () => {
     getCurrentUser.mockRejectedValueOnce(new ApiClientError("UNAUTHORIZED", "登录状态无效或已过期"));
     render(<SpaceDocuments spaceId="space-1" />);

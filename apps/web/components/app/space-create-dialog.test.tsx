@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,10 +10,44 @@ vi.mock("@/lib/spaces", () => ({ createSpace }));
 
 import { SpaceCreateDialog } from "./space-create-dialog";
 
+function DialogHarness() {
+  const [open, setOpen] = useState(false);
+  return <><button onClick={() => setOpen(true)} type="button">open create space</button><SpaceCreateDialog open={open} onCreated={vi.fn()} onOpenChange={setOpen} /></>;
+}
+
 const space = { id: "space-1", name: "企业知识库 Copilot", industry: null, product_direction: null, description: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" };
 
 describe("SpaceCreateDialog", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
+
+  it("keeps the original field ids in the dossier dialog", () => {
+    render(<SpaceCreateDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+
+    expect(screen.getByLabelText("空间名称")).toHaveAttribute("id", "space-name");
+    expect(screen.getByLabelText("行业")).toHaveAttribute("id", "space-industry");
+    expect(screen.getByLabelText("产品方向")).toHaveAttribute("id", "space-product-direction");
+    expect(screen.getByLabelText("描述")).toHaveAttribute("id", "space-description");
+  });
+
+  it("traps keyboard focus in the dialog and restores it to its trigger after closing", async () => {
+    const user = userEvent.setup();
+    render(<DialogHarness />);
+
+    const trigger = screen.getByRole("button", { name: "open create space" });
+    trigger.focus();
+    await user.click(trigger);
+    const name = document.getElementById("space-name")!;
+    await waitFor(() => expect(name).toHaveFocus());
+
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(document.querySelector("[aria-label]"));
+    await user.tab({ shift: true });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "创建产品空间" })));
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 
   it("does not request creation when the name is blank", async () => {
     const user = userEvent.setup();

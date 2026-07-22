@@ -54,11 +54,11 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   };
 
-  return <form className="space-y-4" noValidate onSubmit={onSubmit}>
-    {isRegister && <div className="space-y-2"><label className="text-sm font-medium text-slate-700" htmlFor="display-name">昵称</label><Input aria-describedby={error ? errorId : undefined} disabled={isSubmitting} id="display-name" onChange={(event) => updateValue("displayName", event.target.value)} value={values.displayName} /></div>}
-    <div className="space-y-2"><label className="text-sm font-medium text-slate-700" htmlFor="email">邮箱地址</label><Input aria-describedby={error ? errorId : undefined} autoComplete="email" disabled={isSubmitting} id="email" onChange={(event) => updateValue("email", event.target.value)} type="email" value={values.email} /></div>
-    <div className="space-y-2"><label className="text-sm font-medium text-slate-700" htmlFor="password">密码</label><Input aria-describedby={error ? errorId : undefined} autoComplete={isRegister ? "new-password" : "current-password"} disabled={isSubmitting} id="password" onChange={(event) => updateValue("password", event.target.value)} type="password" value={values.password} /></div>
-    {error && <p className="text-sm text-red-600" id={errorId} role="alert">{error}</p>}
-    <Button className="mt-2 h-10 w-full bg-[#1677ff] hover:bg-[#146be6]" disabled={isSubmitting} type="submit">{isSubmitting ? "提交中…" : isRegister ? "注册" : "登录"}</Button>
+  return <form className="space-y-5" noValidate onSubmit={onSubmit}>
+    {isRegister && <div className="space-y-2"><label className="text-sm font-medium text-foreground" htmlFor="display-name">昵称</label><Input aria-describedby={error ? errorId : undefined} autoComplete="nickname" className="h-10 rounded-md bg-background focus-visible:ring-primary/30" disabled={isSubmitting} id="display-name" onChange={(event) => updateValue("displayName", event.target.value)} value={values.displayName} /></div>}
+    <div className="space-y-2"><label className="text-sm font-medium text-foreground" htmlFor="email">邮箱地址</label><Input aria-describedby={error ? errorId : undefined} autoComplete="email" className="h-10 rounded-md bg-background focus-visible:ring-primary/30" disabled={isSubmitting} id="email" onChange={(event) => updateValue("email", event.target.value)} type="email" value={values.email} /></div>
+    <div className="space-y-2"><label className="text-sm font-medium text-foreground" htmlFor="password">密码</label><Input aria-describedby={error ? errorId : undefined} autoComplete={isRegister ? "new-password" : "current-password"} className="h-10 rounded-md bg-background focus-visible:ring-primary/30" disabled={isSubmitting} id="password" onChange={(event) => updateValue("password", event.target.value)} type="password" value={values.password} /></div>
+    {error && <p className="border-l-2 border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive" id={errorId} role="alert">{error}</p>}
+    <Button className="mt-2 h-10 w-full rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90" disabled={isSubmitting} type="submit">{isSubmitting ? "提交中…" : isRegister ? "注册" : "登录"}</Button>
   </form>;
 }

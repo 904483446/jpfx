@@ -20,4 +20,10 @@ describe("AnalysisTaskCreate", () => {
     await waitFor(() => expect(createAnalysisTask).toHaveBeenCalledWith("space-1", expect.objectContaining({ knownCompetitors: [] })));
     expect(replace).toHaveBeenCalledWith("/app/tasks/task-1");
   });
+
+  it("presents the task form as an analysis dossier", () => {
+    render(<AnalysisTaskCreate spaceId="space-1" />);
+    expect(screen.getByText("分析档案")).toBeInTheDocument();
+    expect(screen.getByText("已知竞品（可选，最多 3 个）")).toBeInTheDocument();
+  });
 });

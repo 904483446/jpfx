@@ -15,6 +15,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth", () => ({ register, login }));
 
 import { AuthForm } from "./auth-form";
+import { AuthShell } from "./auth-shell";
 import { ApiClientError } from "@/lib/api-client";
 
 const fillRegisterForm = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -132,5 +133,37 @@ describe("AuthForm", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(login).not.toHaveBeenCalled();
+  });
+});
+
+describe("AuthShell", () => {
+  it("renders the evidence-first intelligence workspace dossier", () => {
+    const { container } = render(
+      <AuthShell description="说明" footer={<span>页脚</span>} title="登录">
+        <AuthForm mode="login" />
+      </AuthShell>,
+    );
+
+    expect(screen.getByText("证据优先的竞争情报工作台")).toBeInTheDocument();
+    expect(container.querySelector("main.auth-dossier")).toBeInTheDocument();
+    const cover = container.querySelector(".auth-dossier-cover");
+    const productBrief = container.querySelector("aside.auth-dossier-brief");
+    const formSection = container.querySelector("section.auth-dossier-form");
+
+    expect(cover).toHaveClass("shadow-xl", "dark:shadow-2xl");
+    expect(productBrief).toHaveTextContent("从公开信号到可追溯结论");
+    expect(formSection).toContainElement(container.querySelector("form"));
+  });
+
+  it("keeps the credential field identifiers and autocomplete contract", () => {
+    cleanup();
+    render(<AuthForm mode="register" />);
+
+    expect(screen.getByLabelText("昵称")).toHaveAttribute("id", "display-name");
+    expect(screen.getByLabelText("昵称")).toHaveAttribute("autocomplete", "nickname");
+    expect(screen.getByLabelText("邮箱地址")).toHaveAttribute("id", "email");
+    expect(screen.getByLabelText("邮箱地址")).toHaveAttribute("autocomplete", "email");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("id", "password");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("autocomplete", "new-password");
   });
 });

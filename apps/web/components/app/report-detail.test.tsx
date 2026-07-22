@@ -28,6 +28,16 @@ const evidence = [
 describe("ReportDetail", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
+  it("presents the report as an evidence archive with clear provenance boundaries", async () => {
+    getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
+    render(<ReportDetail reportId="report-1" />);
+
+    expect(await screen.findByRole("heading", { name: report.title })).toBeInTheDocument();
+    expect(screen.getByText("报告档案")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "证据账本" })).toBeInTheDocument();
+    expect(screen.getByText("模型推断不构成事实证据，需进一步验证。")) .toBeInTheDocument();
+  });
+
   it("renders structured competitor analysis alongside an independent evidence ledger", async () => {
     getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
     render(<ReportDetail reportId="report-1" />);
@@ -49,6 +59,28 @@ describe("ReportDetail", () => {
     await screen.findByRole("heading", { name: report.title });
     await user.click(screen.getByRole("button", { name: "下载 PDF" }));
     expect(downloadReport).toHaveBeenCalledWith("report-1", "pdf");
+  });
+
+  it("renders a semantic error alert when report loading fails", async () => {
+    getReport.mockRejectedValue(new ApiClientError("NETWORK_ERROR", "报告暂时不可用"));
+    getReportEvidence.mockResolvedValue(evidence);
+    render(<ReportDetail reportId="report-1" />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("报告暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
+  });
+
+  it("shows a semantic error alert when export download fails", async () => {
+    const user = userEvent.setup(); getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
+    downloadReport.mockRejectedValue(new ApiClientError("NETWORK_ERROR", "下载暂时不可用"));
+    render(<ReportDetail reportId="report-1" />);
+
+    await screen.findByRole("heading", { name: report.title });
+    await user.click(screen.getByRole("button", { name: "下载 PDF" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("下载暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
   });
 
   it.each(["javascript:alert(1)", "file:///etc/passwd", "data:text/html,unsafe"])("renders unsafe evidence URL %s as plain text instead of a link", async (unsafeUrl) => {
