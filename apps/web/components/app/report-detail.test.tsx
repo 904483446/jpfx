@@ -28,6 +28,16 @@ const evidence = [
 describe("ReportDetail", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
+  it("presents the report as an evidence archive with clear provenance boundaries", async () => {
+    getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
+    render(<ReportDetail reportId="report-1" />);
+
+    expect(await screen.findByRole("heading", { name: report.title })).toBeInTheDocument();
+    expect(screen.getByText("报告档案")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "证据账本" })).toBeInTheDocument();
+    expect(screen.getByText("模型推断不构成事实证据，需进一步验证。")) .toBeInTheDocument();
+  });
+
   it("renders structured competitor analysis alongside an independent evidence ledger", async () => {
     getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
     render(<ReportDetail reportId="report-1" />);
