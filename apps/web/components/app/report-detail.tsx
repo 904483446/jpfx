@@ -36,8 +36,8 @@ export function ReportDetail({ reportId }: { reportId: string }) {
 
   return <section className="mx-auto max-w-6xl text-foreground">
     <div className="rounded-3xl border border-border bg-background p-6 shadow-2xl shadow-black/5 md:p-8">
-      <div className="flex flex-col justify-between gap-5 border-b border-border pb-6 md:flex-row md:items-start"><div><p className="text-sm font-medium tracking-[0.16em] text-cyan-700 dark:text-cyan-300">报告档案</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">{report?.title ?? "正在加载报告…"}</h1>{report ? <p className="mt-3 text-sm text-muted-foreground">生成于 {new Date(report.created_at).toLocaleString("zh-CN")}</p> : null}</div><div className="flex gap-3"><Button disabled={!report || downloading !== null} onClick={() => void exportFile("pdf")} type="button">{downloading === "pdf" ? "正在下载…" : "下载 PDF"}</Button><Button disabled={!report || downloading !== null} onClick={() => void exportFile("docx")} type="button" variant="outline">{downloading === "docx" ? "正在下载…" : "下载 DOCX"}</Button></div></div>
-      {error ? <p className="mt-5 text-sm text-red-300" role="alert">{error}</p> : null}
+      <div className="flex flex-col justify-between gap-5 border-b border-border pb-6 md:flex-row md:items-start"><div><p className="text-sm font-medium tracking-[0.16em] text-primary">报告档案</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">{report?.title ?? "正在加载报告…"}</h1>{report ? <p className="mt-3 text-sm text-muted-foreground">生成于 {new Date(report.created_at).toLocaleString("zh-CN")}</p> : null}</div><div className="flex gap-3"><Button disabled={!report || downloading !== null} onClick={() => void exportFile("pdf")} type="button">{downloading === "pdf" ? "正在下载…" : "下载 PDF"}</Button><Button disabled={!report || downloading !== null} onClick={() => void exportFile("docx")} type="button" variant="outline">{downloading === "docx" ? "正在下载…" : "下载 DOCX"}</Button></div></div>
+      {error ? <p className="mt-5 text-sm text-destructive" role="alert">{error}</p> : null}
       {report ? <ReportArchive report={report} evidence={evidence} /> : null}
     </div>
   </section>;

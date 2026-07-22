@@ -61,6 +61,28 @@ describe("ReportDetail", () => {
     expect(downloadReport).toHaveBeenCalledWith("report-1", "pdf");
   });
 
+  it("renders a semantic error alert when report loading fails", async () => {
+    getReport.mockRejectedValue(new ApiClientError("NETWORK_ERROR", "报告暂时不可用"));
+    getReportEvidence.mockResolvedValue(evidence);
+    render(<ReportDetail reportId="report-1" />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("报告暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
+  });
+
+  it("shows a semantic error alert when export download fails", async () => {
+    const user = userEvent.setup(); getReport.mockResolvedValue(report); getReportEvidence.mockResolvedValue(evidence);
+    downloadReport.mockRejectedValue(new ApiClientError("NETWORK_ERROR", "下载暂时不可用"));
+    render(<ReportDetail reportId="report-1" />);
+
+    await screen.findByRole("heading", { name: report.title });
+    await user.click(screen.getByRole("button", { name: "下载 PDF" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("下载暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
+  });
+
   it.each(["javascript:alert(1)", "file:///etc/passwd", "data:text/html,unsafe"])("renders unsafe evidence URL %s as plain text instead of a link", async (unsafeUrl) => {
     getReport.mockResolvedValue(report);
     getReportEvidence.mockResolvedValue([...evidence, { id: "e4", source_type: "web", source_title: "不安全来源", source_url: unsafeUrl, quote: null, retrieved_at: null }]);
