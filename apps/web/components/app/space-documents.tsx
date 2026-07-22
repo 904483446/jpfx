@@ -117,7 +117,7 @@ export function SpaceDocuments({ spaceId }: { spaceId: string }) {
       <input aria-label="选择文档" accept=".pdf,.docx,.txt,.md" disabled={isSubmitting} onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)} type="file" />
       <Button disabled={!selectedFile || isSubmitting} onClick={onUpload} type="button">{isSubmitting ? "处理中…" : "上传文档"}</Button>
     </div>
-    {error && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
+    {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
     <section className="mt-6" aria-labelledby="document-archive-heading">
       <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-semibold text-foreground" id="document-archive-heading">已归档资料</h2>{documents && <span className="text-xs text-muted-foreground">{documents.length} 份文档</span>}</div>
       {documents === null && !error && <p className="text-sm text-muted-foreground">正在加载文档…</p>}

@@ -49,6 +49,16 @@ describe("SpaceDocuments", () => {
     expect(screen.getByText("brief.pdf").closest("li")?.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
   });
 
+  it("uses the semantic destructive token for request errors", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockRejectedValueOnce(new ApiClientError("NETWORK_ERROR", "资料暂时不可用"));
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("资料暂时不可用");
+    expect(alert).toHaveClass("text-destructive");
+  });
+
   it("exposes an indexed document with the shared accessible status stamp", async () => {
     getCurrentUser.mockResolvedValueOnce(user);
     listDocuments.mockResolvedValueOnce([{ ...document, status: "indexed" }]);
