@@ -19,6 +19,17 @@ import { SpaceRetrieval } from "./space-retrieval";
 describe("SpaceRetrieval", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
+  it("shows a visible themed label above the retrieval input", () => {
+    getCurrentUser.mockResolvedValueOnce({ id: "user-1" });
+    render(<SpaceRetrieval spaceId="space-1" />);
+
+    const label = screen.getByText("检索问题", { selector: "label" });
+    const input = screen.getByLabelText("检索问题");
+
+    expect(label).not.toHaveClass("sr-only");
+    expect(input).toHaveClass("border-input", "bg-background", "text-foreground");
+  });
+
   it("renders returned source snippets with a similarity score, not a confidence claim", async () => {
     const interaction = userEvent.setup();
     getCurrentUser.mockResolvedValueOnce({ id: "user-1" });
@@ -31,8 +42,8 @@ describe("SpaceRetrieval", () => {
     await interaction.click(screen.getByRole("button", { name: "检索" }));
 
     expect(await screen.findByText("目标用户是小型团队")).toBeInTheDocument();
-    expect(screen.getByText(/brief.md.*片段 3.*0.92/)).toBeInTheDocument();
-    expect(screen.getAllByText(/相似度 0.92/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/brief.md.*片段 3/)).toBeInTheDocument();
+    expect(screen.getAllByText(/相似度 0.92/)).toHaveLength(1);
     expect(screen.queryByText(/可信度/)).not.toBeInTheDocument();
   });
 
