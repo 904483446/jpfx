@@ -39,6 +39,16 @@ describe("SpaceDocuments", () => {
     expect(screen.getByText(/PDF.*2048 B.*2026/)).toBeInTheDocument();
   });
 
+  it("uses the evidence-desk semantic palette for document archives", async () => {
+    getCurrentUser.mockResolvedValueOnce(user);
+    listDocuments.mockResolvedValueOnce([document]);
+    render(<SpaceDocuments spaceId="space-1" />);
+
+    const heading = await screen.findByRole("heading", { name: "文档管理" });
+    expect(heading.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
+    expect(screen.getByText("brief.pdf").closest("li")?.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
+  });
+
   it("exposes an indexed document with the shared accessible status stamp", async () => {
     getCurrentUser.mockResolvedValueOnce(user);
     listDocuments.mockResolvedValueOnce([{ ...document, status: "indexed" }]);

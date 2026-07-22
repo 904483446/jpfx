@@ -30,6 +30,16 @@ describe("SpaceRetrieval", () => {
     expect(input).toHaveClass("border-input", "bg-background", "text-foreground");
   });
 
+  it("uses semantic tokens and lets the query field shrink on narrow screens", () => {
+    getCurrentUser.mockResolvedValueOnce({ id: "user-1" });
+    render(<SpaceRetrieval spaceId="space-1" />);
+
+    const section = screen.getByRole("heading", { name: "空间检索" }).closest("section");
+    const queryField = screen.getByLabelText("检索问题").parentElement;
+    expect(section?.className).not.toMatch(/(?:^|\s)(?:bg|text|border)-(?:slate|cyan)-/);
+    expect(queryField).toHaveClass("min-w-0", "w-full");
+  });
+
   it("renders returned source snippets with a similarity score, not a confidence claim", async () => {
     const interaction = userEvent.setup();
     getCurrentUser.mockResolvedValueOnce({ id: "user-1" });

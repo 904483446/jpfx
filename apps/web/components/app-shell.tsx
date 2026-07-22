@@ -12,7 +12,7 @@ const navigationItems = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <main className="app-dossier min-h-screen bg-background text-foreground" data-testid="app-dossier">
+    <div className="app-dossier min-h-screen bg-background text-foreground" data-testid="app-dossier">
       <div className="grid min-h-screen lg:grid-cols-[15rem_minmax(0,1fr)]">
         <aside aria-label="主导航" className="border-b border-border bg-card lg:border-r lg:border-b-0">
           <div className="flex h-full flex-col px-5 py-6 lg:sticky lg:top-0 lg:min-h-screen">
@@ -26,8 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="mt-auto hidden border-t border-border pt-4 text-xs leading-5 text-muted-foreground lg:block">以可追溯证据组织每一次竞品研究。</p>
           </div>
         </aside>
-        <div className="min-w-0"><header className="context-bar flex min-h-16 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-8" data-testid="context-bar"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">竞品智研台</p><p className="text-sm font-medium">工作台 / 产品空间</p></div><Link className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/app/settings">账户设置</Link></header><section aria-label="主内容" className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</section></div>
+        <div className="min-w-0"><header className="context-bar flex min-h-16 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-8" data-testid="context-bar"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">竞品智研台</p><p className="text-sm font-medium">工作台 / 产品空间</p></div><Link className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/app/settings">账户设置</Link></header><main aria-label="主内容" className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</main></div>
       </div>
-    </main>
+    </div>
   );
 }
