@@ -29,18 +29,36 @@ describe("AnalysisTaskStatus", () => {
     expect(retry).toBeDisabled(); expect(retryAnalysisTask).toHaveBeenCalledWith("task-1");
   });
 
-  it("renders a Chinese stage timeline from the task status and failure stage", async () => {
+  it("renders neutral Chinese failure copy without attributing the failure to model invocation", async () => {
     getAnalysisTask.mockResolvedValueOnce(failedTask);
     render(<AnalysisTaskStatus taskId="task-1" />);
     expect(await screen.findByText("分析进度")).toBeInTheDocument();
-    expect(screen.getByText("模型调用失败")).toBeInTheDocument();
+    expect(screen.getByText("任务未完成，请重试")).toBeInTheDocument();
+    expect(screen.queryByText("模型调用失败")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重新分析" })).toBeInTheDocument();
+  });
+
+  it("uses Chinese labels for queued and completed task statuses", async () => {
+    getAnalysisTask.mockResolvedValueOnce({ ...failedTask, status: "queued", stage: null });
+    const { unmount } = render(<AnalysisTaskStatus taskId="task-1" />);
+    expect(await screen.findByText("等待执行")).toBeInTheDocument();
+    unmount();
+
+    getAnalysisTask.mockResolvedValueOnce({ ...failedTask, status: "completed", stage: null });
+    render(<AnalysisTaskStatus taskId="task-1" />);
+    expect(await screen.findByText("已完成")).toBeInTheDocument();
+  });
+
+  it("does not highlight a speculative timeline stage for failed tasks", async () => {
+    getAnalysisTask.mockResolvedValueOnce(failedTask);
+    render(<AnalysisTaskStatus taskId="task-1" />);
+    await screen.findByText("分析进度");
+    expect(screen.getByText("模型调用")).not.toHaveClass("font-medium");
   });
 
   it.each([
     ["retrieving_private_knowledge", "私有知识检索", "证据采集"],
     ["analyzing", "正在模型分析", "模型调用"],
-    ["failed", "分析失败", "模型调用"],
   ])("maps backend stage %s to a Chinese label at the correct timeline position", async (stage, label, activeTimelineStage) => {
     getAnalysisTask.mockResolvedValueOnce({ ...failedTask, status: stage === "failed" ? "failed" : "running", stage });
     render(<AnalysisTaskStatus taskId="task-1" />);

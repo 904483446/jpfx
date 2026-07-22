@@ -30,12 +30,12 @@ describe("CandidateConfirmation", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("请选择 1 至 3 个竞品");
   });
 
-  it("keeps each candidate checkbox next to its evidence link", async () => {
+  it("keeps evidence links outside the candidate checkbox label", async () => {
     getAnalysisTask.mockResolvedValueOnce(task);
     render(<CandidateConfirmation taskId="task-1" />);
     const checkbox = await screen.findByRole("checkbox", { name: "选择 Example AI" });
     const evidenceLink = screen.getByRole("link", { name: "https://example.com" });
-    expect(checkbox.closest("label")).toContainElement(evidenceLink);
+    expect(checkbox.closest("label")).not.toContainElement(evidenceLink);
   });
 
   it("does not render an unsafe evidence URL as a link", async () => {
