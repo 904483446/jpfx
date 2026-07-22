@@ -42,7 +42,7 @@ describe("SpaceCreateDialog", () => {
     await user.tab({ shift: true });
     expect(document.activeElement).toBe(document.querySelector("[aria-label]"));
     await user.tab({ shift: true });
-    expect(document.activeElement).toBe(document.querySelector('button[type="submit"]'));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "创建产品空间" })));
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
