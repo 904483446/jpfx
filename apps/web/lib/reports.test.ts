@@ -6,7 +6,7 @@ vi.mock("./api-client", async (importOriginal) => ({
   apiRequest,
 }));
 
-import { downloadReport, getReport, getReportEvidence } from "./reports";
+import { downloadReport, getReport, getReportEvidence, listReports } from "./reports";
 
 describe("report API client", () => {
   afterEach(() => {
@@ -23,6 +23,16 @@ describe("report API client", () => {
 
     expect(apiRequest).toHaveBeenNthCalledWith(1, "/reports/report-1");
     expect(apiRequest).toHaveBeenNthCalledWith(2, "/reports/report-1/evidence");
+  });
+
+  it("loads reports with an optional encoded space filter", async () => {
+    apiRequest.mockResolvedValue([]);
+
+    await expect(listReports()).resolves.toEqual([]);
+    await expect(listReports("space id")).resolves.toEqual([]);
+
+    expect(apiRequest).toHaveBeenNthCalledWith(1, "/reports");
+    expect(apiRequest).toHaveBeenNthCalledWith(2, "/reports?space_id=space%20id");
   });
 
   it("downloads a PDF using credentialed fetch and the response blob", async () => {
