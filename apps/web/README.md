@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JPFX Web
 
-## Getting Started
+JPFX 的 Next.js 前端，提供公开首页、认证、产品空间、文档与检索、竞品分析任务、报告详情及模型设置页面。应用通过 Cookie 会话调用 FastAPI；浏览器端不读取、保存或展示 JWT 与 API Key。
 
-First, run the development server:
+## 本地启动
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```powershell
+cd apps/web
+# 创建 .env.local，只设置 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+npm.cmd ci
+npm.cmd run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 `http://127.0.0.1:3000`。完整的环境变量、安全边界与后端启动步骤请参阅仓库根目录的 [README](../../README.md)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 质量门禁
 
-This project uses a local system font stack, including common Chinese UI fonts and system fallbacks, so production builds do not depend on external font downloads.
+```powershell
+npm.cmd test
+npm.cmd run check:routes
+npx.cmd tsc --noEmit
+npm.cmd run lint
+npm.cmd run build
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+生产部署目标为 Vercel；部署与公开 Demo 属于 V1.0 工作，尚未在本仓库完成验证。

@@ -6,7 +6,7 @@
 
 面向国内 AI 产品经理的竞品分析工作台。项目目标是把用户私有资料、公开竞品信息、RAG 检索和固定多 Agent 分析流程结合起来，生成有来源、有证据、有不确定性提示的中文结构化竞品分析报告。
 
-当前仓库以 `PRD.md`、`TECH_SPEC.md`、`TASK_BREAKDOWN.md` 为核心依据推进开发，功能范围和执行顺序以这些文档为准。
+当前仓库以 `PRD.md`、`TECH_SPEC.md`、`TASK_BREAKDOWN.md` 为核心依据推进开发；已实现能力与下一步缺口以 [当前项目状态记录](docs/superpowers/handoffs/2026-07-23-current-project-status.md) 为准。
 
 ## 技术栈方向
 
@@ -23,11 +23,11 @@
 
 ## 当前阶段
 
-V0.1 Task 0（项目初始化与文档对齐）至 Task 10（文档与验证收尾）已经完成；当前已接入真实注册、真实登录、`/app` 当前用户校验、空间列表和弹窗创建。
+V0.1、V0.2、V0.3 和 V0.4 的主流程已合并到 `main`；2026-07-22 又合并了全站“证据编辑部”前端重构。当前处于“补齐 V0.4 报告归档缺口、完成真实集成验证、准备 V1.0 展示与部署”的阶段，而不是从 V0.2 重新开始。
 
-已完成：
+已完成的主流程：
 
-已有基础能力（在 Task 8 开始前已实现；其中后端 API 仅作参考）：
+### V0.1：用户与空间基础
 
 - 核心文档与前后端目录入口
 - FastAPI 应用入口和 `/api/v1` 统一前缀
@@ -53,7 +53,29 @@ V0.1 Task 0（项目初始化与文档对齐）至 Task 10（文档与验证收�
 - Task 9 前端：以弹窗创建名称必填、行业/产品方向/描述选填的产品空间；成功后进入空间详情占位页
 - Task 10：收敛非敏感环境变量示例、更新项目状态说明，并完成前后端自动化验证记录
 
-空间详情页当前仅为占位页，不加载空间详情数据。后端已有 `POST /api/v1/auth/logout` 和创建空间时原子创建默认知识库的能力；前端退出流程和默认知识库展示均未实现，且 Task 10 不新增这些功能。
+### V0.2：文档管理
+
+- 空间内 PDF、DOCX、TXT、Markdown 上传，20MB 限制与类型校验
+- 文档列表、删除、处理状态与失败原因展示
+- 文档索引入口及用户、空间隔离
+
+### V0.3：私有知识库检索
+
+- 文本解析、切分、DashScope embedding 与 `pgvector` 索引
+- 按当前用户和当前空间严格过滤的 RAG 检索
+- 前端检索表单、来源文档、chunk 与相似度展示
+
+### V0.4：竞品分析与报告
+
+- DeepSeek API Key 加密保存与仅返回脱敏提示的设置页
+- 博查公开资料搜索、候选竞品发现和证据归属
+- 0–3 个已知竞品、手动/自动候选确认、后台分析、轮询状态与失败重试
+- 中文结构化报告、公开网页/私有知识库/模型推断三类证据、报告详情和 PDF/DOCX 导出
+
+### 近期已完成的前端体验工作
+
+- 首页、认证、应用壳、资料、检索、任务、报告和模型设置均已重构为“证据编辑部”视觉系统
+- 已覆盖窄屏、深色主题、键盘焦点、可见标签、加载/空/错误状态与减少动态设置
 
 ## 目录结构
 
@@ -70,10 +92,11 @@ jpfx/
     api/
 ```
 
-后续任务会继续补齐：
+当前仍待补齐：
 
-- `services/api`：FastAPI 应用、API 路由、数据库模型、服务层、测试和迁移。
-- `apps/web`：Next.js App Router 页面、组件、API Client 和类型定义。
+- 报告列表 API 与 `/app/reports` 报告中心页面；现有导航入口尚未形成闭环。
+- 真实浏览器 Cookie/CORS 联调、Docker/Alembic 迁移验证，以及用户明确授权后的真实外部 Provider 验证。
+- V1.0 展示材料：架构图、截图、示例空间/文档/报告、部署说明和公开 Demo。
 
 ## 本地开发要求
 
@@ -116,7 +139,9 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-Task 10 已实际执行并通过：`npm.cmd run test`（7 个测试文件、32/32 tests）、`npm.cmd run check:routes`、`npm.cmd exec tsc -- --noEmit`、`npm.cmd run lint`、`npm.cmd run build`，以及 `npm.cmd audit --omit=dev`（0 vulnerabilities）。后端 `ruff check`、`ruff format --check` 与 `pytest` 也已通过，其中 Pytest 为 100/100。
+V0.1 Task 10 曾实际执行并通过：`npm.cmd run test`（7 个测试文件、32/32 tests）、`npm.cmd run check:routes`、`npm.cmd exec tsc -- --noEmit`、`npm.cmd run lint`、`npm.cmd run build`，以及 `npm.cmd audit --omit=dev`（0 vulnerabilities）。后端 `ruff check`、`ruff format --check` 与 `pytest` 也已通过，其中 Pytest 为 100/100。
+
+前端重构合并后的本地验证记录为：`npm.cmd test`（24 个文件、95 个测试）、`npm.cmd run check:routes`、`npx.cmd tsc --noEmit`、`npm.cmd run lint` 与 `npm.cmd run build` 均通过。该记录只代表前端本地门禁；不替代后端、数据库、浏览器或真实第三方服务验证。
 
 ### 浏览器烟雾验证
 
@@ -190,7 +215,7 @@ Invoke-RestMethod `
 
 生产环境必须将该变量设置为实际部署的 HTTPS 前端 Origin（协议、域名和端口需与浏览器请求一致）。不得使用 `*`：携带 Cookie 的 CORS 请求不允许通配符来源，服务会拒绝此配置。
 
-用户自己的 DeepSeek API Key 未来会加密保存在数据库中，不作为平台环境变量写入代码仓库。
+用户自己的 DeepSeek API Key 会加密保存在数据库中，不作为平台环境变量写入代码仓库；前端仅显示配置状态和脱敏提示。
 
 ## 开发顺序
 
@@ -203,4 +228,4 @@ Invoke-RestMethod `
 5. V0.5：多 Agent 工作流优化与导出
 6. V1.0：GitHub 可展示版本
 
-V0.2 从空间内文档上传、文档列表和文档状态管理开始。空间详情数据加载、空间编辑删除、前端退出登录、默认知识库展示、RAG、竞品分析、报告导出、团队协作和付费系统仍未实现，后续任务不得提前进入 V0.2+ 范围。
+下一项实现工作是完成报告归档闭环：按当前用户和空间列出历史报告，并提供 `/app/reports` 页面。之后再进行真实集成验证与 V1.0 展示、部署工作；团队协作、付费、浏览器插件和移动端仍不在当前 MVP 范围。
