@@ -15,7 +15,7 @@ export function ReportArchiveList() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      setReports(await listReports());
+      setReports((await listReports()) ?? []);
     } catch (caught) {
       if (caught instanceof ApiClientError && caught.code === "UNAUTHORIZED") {
         replace("/login");
