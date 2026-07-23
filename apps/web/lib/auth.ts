@@ -43,3 +43,7 @@ export function login(input: LoginInput): Promise<CurrentUser | undefined> {
 export function getCurrentUser(): Promise<CurrentUser | undefined> {
   return apiRequest<CurrentUser>("/auth/me");
 }
+
+export function logout(): Promise<void | undefined> {
+  return apiRequest<void>("/auth/logout", { method: "POST" });
+}
