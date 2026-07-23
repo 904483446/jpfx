@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from xml.etree import ElementTree
 from zipfile import ZipFile
@@ -134,6 +134,44 @@ def test_report_detail_returns_json_source_of_truth_and_evidence(
         "private_knowledge",
         "model_inference",
     }
+
+
+def test_list_reports_returns_current_users_reports_newest_first(
+    client, database_session
+):
+    user = _authenticate(client, database_session, "reports-list@example.com")
+    first = _create_report(database_session, user)
+    second = _create_report(database_session, user)
+    second.created_at = first.created_at + timedelta(seconds=1)
+    database_session.commit()
+
+    response = client.get("/api/v1/reports")
+
+    assert response.status_code == 200
+    assert [item["id"] for item in response.json()] == [str(second.id), str(first.id)]
+
+
+def test_list_reports_cannot_enumerate_another_users_reports(client, database_session):
+    owner = _authenticate(client, database_session, "reports-list-owner@example.com")
+    _create_report(database_session, owner)
+    _authenticate(client, database_session, "reports-list-other@example.com")
+
+    response = client.get("/api/v1/reports")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_reports_filters_current_users_selected_space(client, database_session):
+    user = _authenticate(client, database_session, "reports-space-filter@example.com")
+    selected = _create_report(database_session, user)
+    other_space_report = _create_report(database_session, user)
+
+    response = client.get(f"/api/v1/reports?space_id={selected.space_id}")
+
+    assert response.status_code == 200
+    assert [item["id"] for item in response.json()] == [str(selected.id)]
+    assert str(other_space_report.id) not in response.text
 
 
 def test_report_evidence_and_exports_use_the_report_snapshot(client, database_session):

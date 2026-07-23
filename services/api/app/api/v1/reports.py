@@ -16,6 +16,23 @@ from app.services.report_export_service import build_docx, build_pdf
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
+@router.get("", response_model=list[ReportResponse])
+def list_reports(
+    current_user: Annotated[User, Depends(get_current_user)],
+    database_session: Annotated[Session, Depends(get_db_session)],
+    space_id: UUID | None = None,
+) -> list[ReportResponse]:
+    statement = select(CompetitorReport).where(
+        CompetitorReport.user_id == current_user.id
+    )
+    if space_id is not None:
+        statement = statement.where(CompetitorReport.space_id == space_id)
+    reports = database_session.scalars(
+        statement.order_by(CompetitorReport.created_at.desc())
+    ).all()
+    return [ReportResponse.model_validate(report) for report in reports]
+
+
 def _owned_report(session: Session, user: User, report_id: UUID) -> CompetitorReport:
     report = session.scalar(
         select(CompetitorReport).where(

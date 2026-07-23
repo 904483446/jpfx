@@ -45,6 +45,11 @@ export function getReport(reportId: string) {
   return apiRequest<CompetitorReport>(`/reports/${reportId}`);
 }
 
+export function listReports(spaceId?: string) {
+  const query = spaceId ? `?space_id=${encodeURIComponent(spaceId)}` : "";
+  return apiRequest<CompetitorReport[]>(`/reports${query}`);
+}
+
 export function getReportEvidence(reportId: string) {
   return apiRequest<ReportEvidence[]>(`/reports/${reportId}/evidence`);
 }
