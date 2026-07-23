@@ -43,7 +43,12 @@ def test_create_access_token_has_expected_claims():
         now=NOW,
     )
 
-    claims = jwt.decode(token, TEST_SECRET, algorithms=["HS256"])
+    claims = jwt.decode(
+        token,
+        TEST_SECRET,
+        algorithms=["HS256"],
+        options={"verify_exp": False},
+    )
     assert claims["sub"] == str(USER_ID)
     assert datetime.fromtimestamp(claims["iat"], UTC) == NOW
     assert datetime.fromtimestamp(claims["exp"], UTC) == NOW + timedelta(days=7)
