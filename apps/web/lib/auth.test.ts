@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { apiRequest } from "./api-client";
-import { getCurrentUser, login, register } from "./auth";
+import { getCurrentUser, login, logout, register } from "./auth";
 
 vi.mock("./api-client", () => ({
   apiRequest: vi.fn(),
@@ -50,5 +50,11 @@ describe("auth API helpers", () => {
     await getCurrentUser();
 
     expect(apiRequestMock).toHaveBeenCalledWith("/auth/me");
+  });
+
+  it("logout delegates a POST request to the logout endpoint", async () => {
+    await logout();
+
+    expect(apiRequestMock).toHaveBeenCalledWith("/auth/logout", { method: "POST" });
   });
 });
