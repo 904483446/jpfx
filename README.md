@@ -19,6 +19,28 @@ flowchart LR
 
 浏览器通过携带凭据的请求访问 FastAPI；服务端负责鉴权、空间隔离、资料与向量检索、任务和报告。外部模型、检索服务仅在用户或运行环境完成相应配置时才会被调用。
 
+## 页面预览
+
+登录页
+
+![登录页](docs/assets/v1-showcase/login.png)
+
+工作台空状态
+
+![工作台空状态](docs/assets/v1-showcase/dashboard.png)
+
+分析任务空队列
+
+![分析任务空队列](docs/assets/v1-showcase/task-or-report.png)
+
+模型凭据设置
+
+![模型凭据设置](docs/assets/v1-showcase/settings.png)
+
+以上均为本地开发环境真实页面截图；不代表外部 Provider 已发生真实调用，也不代表已提供公开线上 Demo。
+
+为不创建演示业务数据，当前不展示产品空间详情页截图。
+
 ## 已合并能力
 
 | 能力 | 已合并实现 |
