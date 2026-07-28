@@ -1,7 +1,60 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth";
+import { ApiClientError } from "@/lib/api-client";
 
 export default function TasksPage() {
+  const { replace } = useRouter();
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
+
+  const loadCurrentUser = useCallback(async () => {
+    const currentRequestVersion = ++requestVersion.current;
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentRequestVersion !== requestVersion.current) return;
+      if (!currentUser) {
+        setError("网络请求失败，请稍后重试");
+        setStatus("error");
+        return;
+      }
+      setStatus("ready");
+    } catch (caughtError) {
+      if (currentRequestVersion !== requestVersion.current) return;
+      if (caughtError instanceof ApiClientError && caughtError.code === "UNAUTHORIZED") {
+        replace("/login");
+        return;
+      }
+      setError(caughtError instanceof ApiClientError ? caughtError.message : "网络请求失败，请稍后重试");
+      setStatus("error");
+    }
+  }, [replace]);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) return loadCurrentUser();
+    });
+    return () => {
+      active = false;
+      requestVersion.current += 1;
+    };
+  }, [loadCurrentUser]);
+
+  if (status === "loading") {
+    return <div aria-busy="true" className="mx-auto max-w-4xl space-y-4"><span className="sr-only">正在验证登录状态…</span></div>;
+  }
+
+  if (status === "error") {
+    return <div className="mx-auto max-w-4xl space-y-4"><p className="text-sm text-destructive" role="alert">{error}</p><Button onClick={() => { setStatus("loading"); setError(null); void loadCurrentUser(); }} type="button">重试</Button></div>;
+  }
+
   return (
     <AppShell>
       <section className="mx-auto max-w-4xl">
