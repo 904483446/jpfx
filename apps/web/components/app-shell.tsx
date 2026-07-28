@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
+import { LogoutControl } from "@/components/auth/logout-control";
 
 const navigationItems = [
   { href: "/app", label: "工作台", note: "空间总览" },
@@ -26,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="mt-auto hidden border-t border-border pt-4 text-xs leading-5 text-muted-foreground lg:block">以可追溯证据组织每一次竞品研究。</p>
           </div>
         </aside>
-        <div className="min-w-0"><header className="context-bar flex min-h-16 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-8" data-testid="context-bar"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">竞品智研台</p><p className="text-sm font-medium">工作台 / 产品空间</p></div><Link className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/app/settings">账户设置</Link></header><main aria-label="主内容" className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</main></div>
+        <div className="min-w-0"><header className="context-bar flex min-h-16 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-8" data-testid="context-bar"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">竞品智研台</p><p className="text-sm font-medium">工作台 / 产品空间</p></div><div className="flex items-center gap-4"><Link className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/app/settings">账户设置</Link><LogoutControl /></div></header><main aria-label="主内容" className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</main></div>
       </div>
     </div>
   );
