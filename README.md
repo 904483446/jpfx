@@ -39,18 +39,24 @@ flowchart LR
 2. 从仓库根目录启动本地 PostgreSQL + pgvector：
 
    ```powershell
-   docker compose up -d db
+   docker compose up -d --wait db
    ```
 
-3. 在启动 FastAPI 前执行数据库迁移：
+3. 等待 `db` 就绪后，在启动 FastAPI 前执行数据库迁移：
 
    ```powershell
    cd services/api
    ./.venv/Scripts/python.exe -m alembic upgrade head
    ```
 
-4. 在 `apps/web/.env.local` 中设置变量名 `NEXT_PUBLIC_API_BASE_URL`。
-5. 分别启动后端和前端：
+4. 在 `apps/web/.env.local` 中设置以下非敏感本地地址：
+
+   ```text
+   NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+   ```
+
+5. 可选能力仅在需要时配置对应变量：`DASHSCOPE_API_KEY`（RAG）、`BOCHA_API_KEY`（候选检索）、`API_KEY_ENCRYPTION_SECRET`（保存用户 DeepSeek Key 前）。
+6. 分别启动后端和前端：
 
 ```powershell
 # 终端 1：后端
@@ -68,6 +74,9 @@ npm.cmd run dev
 常用本地检查：
 
 ```powershell
+# 从仓库根目录启动测试数据库，并等待其就绪，避免测试连接竞争
+docker compose up -d --wait db-test
+
 # 后端（services/api）
 .\.venv\Scripts\python.exe -m ruff check --no-cache .
 .\.venv\Scripts\python.exe -m ruff format --check --no-cache .
