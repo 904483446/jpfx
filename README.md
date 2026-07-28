@@ -46,7 +46,7 @@ flowchart LR
 
    ```powershell
    cd services/api
-   D:\Codex_project\jpfx\services\api\.venv\Scripts\python.exe -m alembic upgrade head
+   ./.venv/Scripts/python.exe -m alembic upgrade head
    ```
 
 4. 在 `apps/web/.env.local` 中设置变量名 `NEXT_PUBLIC_API_BASE_URL`。
