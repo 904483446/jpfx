@@ -78,11 +78,13 @@ npm.cmd run dev
 docker compose up -d --wait db-test
 
 # 后端（services/api）
+cd services/api
 .\.venv\Scripts\python.exe -m ruff check --no-cache .
 .\.venv\Scripts\python.exe -m ruff format --check --no-cache .
 .\.venv\Scripts\python.exe -m pytest -q
 
 # 前端（apps/web）
+cd ../../apps/web
 npm.cmd run test
 npm.cmd run check:routes
 npx.cmd tsc --noEmit
