@@ -35,9 +35,22 @@ flowchart LR
 
 仅使用仓库中的 [`.env.example`](.env.example) 作为环境变量说明；不要提交真实 `.env`、`apps/web/.env.local`、密钥、Cookie 或 Token。
 
-1. 按 [`.env.example`](.env.example) 创建本地 `.env`，并根据你的本地服务配置变量名：`JWT_SECRET`、`DATABASE_URL`、`TEST_DATABASE_URL`、`CORS_ALLOWED_ORIGINS`、`AUTH_COOKIE_SECURE`。
-2. 在 `apps/web/.env.local` 中设置变量名 `NEXT_PUBLIC_API_BASE_URL`。
-3. 分别启动后端和前端：
+1. 按 [`.env.example`](.env.example) 创建本地 `.env`。该文件为 Docker PostgreSQL + pgvector 与后端提供本地配置；不要展示或提交其中的真实值。按需配置变量名：`JWT_SECRET`、`DATABASE_URL`、`TEST_DATABASE_URL`、`CORS_ALLOWED_ORIGINS`、`AUTH_COOKIE_SECURE`。
+2. 从仓库根目录启动本地 PostgreSQL + pgvector：
+
+   ```powershell
+   docker compose up -d db
+   ```
+
+3. 在启动 FastAPI 前执行数据库迁移：
+
+   ```powershell
+   cd services/api
+   D:\Codex_project\jpfx\services\api\.venv\Scripts\python.exe -m alembic upgrade head
+   ```
+
+4. 在 `apps/web/.env.local` 中设置变量名 `NEXT_PUBLIC_API_BASE_URL`。
+5. 分别启动后端和前端：
 
 ```powershell
 # 终端 1：后端
