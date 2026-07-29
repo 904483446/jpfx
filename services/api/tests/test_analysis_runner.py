@@ -13,6 +13,10 @@ from app.models import (
     TaskEvidence,
     User,
 )
+from app.services.analysis_agent_run_service import (
+    create_agent_run_attempt,
+    list_agent_runs,
+)
 from app.services.analysis_runner import run_analysis_task
 from app.services.retrieval_service import RetrievalResult
 from sqlalchemy.orm import sessionmaker
@@ -83,6 +87,7 @@ def _create_queued_task(database_session, user, space):
             retrieved_at=datetime.now(UTC),
         )
     )
+    create_agent_run_attempt(database_session, task)
     database_session.commit()
     return task
 
@@ -199,6 +204,13 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
     assert private_evidence.knowledge_base_id == chunk.knowledge_base_id
     assert private_evidence.quote == "Private indexed context"
     assert provider.prompts
+    runs = list_agent_runs(database_session, task)
+    assert [(run.agent_key, run.status) for run in runs] == [
+        ("evidence_collection", "completed"),
+        ("quality_check", "completed"),
+        ("model_analysis", "completed"),
+        ("report_generation", "completed"),
+    ]
 
 
 def test_analysis_runner_fails_without_evidence_before_calling_provider(
@@ -230,6 +242,13 @@ def test_analysis_runner_fails_without_evidence_before_calling_provider(
         database_session.query(CompetitorReport).filter_by(task_id=task.id).count() == 0
     )
     assert provider.prompts == []
+    runs = list_agent_runs(database_session, task)
+    assert [(run.agent_key, run.status) for run in runs] == [
+        ("evidence_collection", "completed"),
+        ("quality_check", "failed"),
+        ("model_analysis", "skipped"),
+        ("report_generation", "skipped"),
+    ]
 
 
 def test_analysis_runner_persists_safe_failure_before_reraising_app_error(
