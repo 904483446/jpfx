@@ -185,6 +185,12 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
     assert {
         (item["id"], item["source_type"]) for item in report.structured_json["evidence"]
     } == {(str(item.id), item.source_type) for item in evidence}
+    assert report.structured_json["quality_check"] == {
+        "status": "passed",
+        "evidence_count": 2,
+        "web_evidence_count": 1,
+        "private_knowledge_evidence_count": 1,
+    }
     private_evidence = next(
         item for item in evidence if item.source_type == "private_knowledge"
     )
@@ -193,6 +199,35 @@ def test_analysis_runner_uses_only_task_owner_context_and_persists_report_and_ev
     assert private_evidence.knowledge_base_id == chunk.knowledge_base_id
     assert private_evidence.quote == "Private indexed context"
     assert provider.prompts
+
+
+def test_analysis_runner_fails_without_evidence_before_calling_provider(
+    database_session, monkeypatch
+):
+    user, space = _create_owner_and_space(database_session)
+    task = _create_queued_task(database_session, user, space)
+    database_session.query(TaskEvidence).filter_by(task_id=task.id).delete()
+    database_session.commit()
+    provider = FakeDeepSeekProvider()
+    monkeypatch.setattr(
+        "app.services.analysis_runner.search_documents", lambda *_args, **_kwargs: []
+    )
+
+    with pytest.raises(AppError, match="没有可追溯证据"):
+        run_analysis_task(
+            task.id,
+            session_factory=_background_session_factory(database_session),
+            embedding_provider=object(),
+            provider_factory=lambda _key: provider,
+        )
+
+    database_session.expire_all()
+    task = database_session.get(AnalysisTask, task.id)
+    assert task is not None
+    assert task.status == "failed"
+    assert task.error_message == "证据质量检查未通过：没有可追溯证据"
+    assert database_session.query(CompetitorReport).filter_by(task_id=task.id).count() == 0
+    assert provider.prompts == []
 
 
 def test_analysis_runner_persists_safe_failure_before_reraising_app_error(
@@ -209,6 +244,9 @@ def test_analysis_runner_persists_safe_failure_before_reraising_app_error(
                 message="DeepSeek API Key is not configured",
             )
         ),
+    )
+    monkeypatch.setattr(
+        "app.services.analysis_runner.search_documents", lambda *_args, **_kwargs: []
     )
 
     with pytest.raises(AppError) as captured:

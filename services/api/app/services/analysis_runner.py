@@ -19,6 +19,10 @@ from app.models import (
 )
 from app.services.deepseek_provider import DeepSeekProvider
 from app.services.embedding_provider import DashScopeEmbeddingProvider
+from app.services.evidence_quality import (
+    EvidenceQualitySummary,
+    validate_evidence_quality,
+)
 from app.services.key_cipher import KeyCipher
 from app.services.retrieval_service import (
     EmbeddingProvider,
@@ -53,6 +57,7 @@ class EvidenceReference(BaseModel):
 
 class ReportContent(ModelReportContent):
     evidence: list[EvidenceReference]
+    quality_check: EvidenceQualitySummary
 
 
 class JsonCompletionProvider(Protocol):
@@ -112,7 +117,6 @@ def _execute_analysis_task(
     database_session.commit()
 
     try:
-        api_key = get_deepseek_api_key(database_session, owner)
         private_context = search_documents(
             database_session,
             owner,
@@ -150,6 +154,12 @@ def _execute_analysis_task(
             )
         )
         web_evidence = [item for item in evidence if item.source_type == "web"]
+        task.stage = "quality_checking"
+        database_session.commit()
+        quality_check = validate_evidence_quality(evidence)
+        task.stage = "analyzing"
+        database_session.commit()
+        api_key = get_deepseek_api_key(database_session, owner)
         model_content = ModelReportContent.model_validate(
             provider_factory(api_key).complete_json(
                 _system_prompt(),
@@ -162,6 +172,7 @@ def _execute_analysis_task(
                 EvidenceReference(id=item.id, source_type=item.source_type)
                 for item in evidence
             ],
+            quality_check=quality_check,
         )
         database_session.add(
             CompetitorReport(
@@ -176,8 +187,12 @@ def _execute_analysis_task(
         task.stage = "completed"
         task.completed_at = datetime.now(UTC)
         database_session.commit()
-    except AppError:
-        _persist_failure(database_session, task)
+    except AppError as error:
+        _persist_failure(
+            database_session,
+            task,
+            error.message if error.code == "EVIDENCE_QUALITY_FAILED" else None,
+        )
         raise
     except Exception as error:
         _persist_failure(database_session, task)
@@ -204,11 +219,15 @@ def _persist_private_evidence(
         )
 
 
-def _persist_failure(database_session: Session, task: AnalysisTask) -> None:
+def _persist_failure(
+    database_session: Session,
+    task: AnalysisTask,
+    error_message: str | None = None,
+) -> None:
     database_session.rollback()
     task.status = "failed"
     task.stage = "failed"
-    task.error_message = "分析任务失败，请检查模型配置或稍后重试"
+    task.error_message = error_message or "分析任务失败，请检查模型配置或稍后重试"
     database_session.commit()
 
 
