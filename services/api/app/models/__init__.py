@@ -1,3 +1,4 @@
+from app.models.analysis_agent_run import AnalysisAgentRun
 from app.models.analysis_task import AnalysisTask
 from app.models.competitor_candidate import CompetitorCandidate
 from app.models.competitor_report import CompetitorReport
@@ -10,6 +11,7 @@ from app.models.task_evidence import TaskEvidence
 from app.models.user import User
 
 __all__ = [
+    "AnalysisAgentRun",
     "AnalysisTask",
     "CompetitorCandidate",
     "CompetitorReport",

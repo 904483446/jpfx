@@ -8,12 +8,14 @@ from app.api.deps import get_current_user
 from app.db.session import get_db_session
 from app.models import TaskEvidence, User
 from app.schemas.analysis_task import (
+    AgentRunResponse,
     AnalysisTaskCreateRequest,
     AnalysisTaskResponse,
     CandidateEvidenceResponse,
     CandidateResponse,
     CompetitorSelectionRequest,
 )
+from app.services.analysis_agent_run_service import list_agent_runs
 from app.services.analysis_runner import run_analysis_task
 from app.services.analysis_task_service import (
     auto_select_competitors,
@@ -33,6 +35,10 @@ tasks_router = APIRouter(prefix="/analysis-tasks", tags=["analysis-tasks"])
 
 def _task_response(database_session: Session, task) -> AnalysisTaskResponse:
     response = AnalysisTaskResponse.model_validate(task)
+    response.agent_runs = [
+        AgentRunResponse.model_validate(run)
+        for run in list_agent_runs(database_session, task)
+    ]
     response.candidates = []
     for candidate in list_task_candidates(database_session, task):
         candidate_response = CandidateResponse.model_validate(candidate)

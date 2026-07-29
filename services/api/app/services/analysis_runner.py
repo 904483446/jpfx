@@ -17,6 +17,11 @@ from app.models import (
     TaskEvidence,
     User,
 )
+from app.services.analysis_agent_run_service import (
+    complete_agent_run,
+    fail_agent_run,
+    start_agent_run,
+)
 from app.services.deepseek_provider import DeepSeekProvider
 from app.services.embedding_provider import DashScopeEmbeddingProvider
 from app.services.evidence_quality import (
@@ -114,6 +119,8 @@ def _execute_analysis_task(
     task.status = "running"
     task.stage = "retrieving_private_knowledge"
     task.error_message = None
+    current_agent_key = "evidence_collection"
+    start_agent_run(database_session, task, current_agent_key)
     database_session.commit()
 
     try:
@@ -126,7 +133,10 @@ def _execute_analysis_task(
             top_k=8,
         )
         _persist_private_evidence(database_session, task, private_context)
-        task.stage = "analyzing"
+        complete_agent_run(database_session, task, current_agent_key)
+        current_agent_key = "quality_check"
+        start_agent_run(database_session, task, current_agent_key)
+        task.stage = "quality_checking"
         database_session.commit()
 
         selected_competitors = list(
@@ -154,9 +164,10 @@ def _execute_analysis_task(
             )
         )
         web_evidence = [item for item in evidence if item.source_type == "web"]
-        task.stage = "quality_checking"
-        database_session.commit()
         quality_check = validate_evidence_quality(evidence)
+        complete_agent_run(database_session, task, current_agent_key)
+        current_agent_key = "model_analysis"
+        start_agent_run(database_session, task, current_agent_key)
         task.stage = "analyzing"
         database_session.commit()
         api_key = get_deepseek_api_key(database_session, owner)
@@ -166,6 +177,9 @@ def _execute_analysis_task(
                 _user_prompt(task, selected_competitors, private_context, web_evidence),
             )
         )
+        complete_agent_run(database_session, task, current_agent_key)
+        current_agent_key = "report_generation"
+        start_agent_run(database_session, task, current_agent_key)
         content = ReportContent(
             **model_content.model_dump(),
             evidence=[
@@ -186,16 +200,28 @@ def _execute_analysis_task(
         task.status = "completed"
         task.stage = "completed"
         task.completed_at = datetime.now(UTC)
+        complete_agent_run(database_session, task, current_agent_key)
         database_session.commit()
     except AppError as error:
+        error_message = (
+            error.message
+            if error.code == "EVIDENCE_QUALITY_FAILED"
+            else "分析任务失败，请检查模型配置或稍后重试"
+        )
         _persist_failure(
             database_session,
             task,
-            error.message if error.code == "EVIDENCE_QUALITY_FAILED" else None,
+            error_message,
+            current_agent_key,
         )
         raise
     except Exception as error:
-        _persist_failure(database_session, task)
+        _persist_failure(
+            database_session,
+            task,
+            "分析任务失败，请检查模型配置或稍后重试",
+            current_agent_key,
+        )
         raise analysis_pipeline_error() from error
 
 
@@ -223,11 +249,15 @@ def _persist_failure(
     database_session: Session,
     task: AnalysisTask,
     error_message: str | None = None,
+    agent_key: str | None = None,
 ) -> None:
     database_session.rollback()
+    message = error_message or "分析任务失败，请检查模型配置或稍后重试"
+    if agent_key is not None:
+        fail_agent_run(database_session, task, agent_key, message)
     task.status = "failed"
     task.stage = "failed"
-    task.error_message = error_message or "分析任务失败，请检查模型配置或稍后重试"
+    task.error_message = message
     database_session.commit()
 
 

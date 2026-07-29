@@ -49,6 +49,17 @@ class CompetitorSelectionRequest(BaseModel):
     candidate_ids: list[UUID] = Field(min_length=1, max_length=3)
 
 
+class AgentRunResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    attempt: int
+    agent_key: str
+    status: str
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
+
+
 class AnalysisTaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -64,4 +75,5 @@ class AnalysisTaskResponse(BaseModel):
     stage: str | None
     completed_at: datetime | None
     final_competitors: list[str]
+    agent_runs: list[AgentRunResponse] = Field(default_factory=list)
     candidates: list[CandidateResponse] = Field(default_factory=list)

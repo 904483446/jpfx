@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { AnalysisAgentRunHistory } from "@/components/app/analysis-agent-run-history";
 import { ApiClientError } from "@/lib/api-client";
 import { getAnalysisTask, retryAnalysisTask, type AnalysisTask } from "@/lib/analysis-tasks";
 
@@ -64,6 +65,7 @@ export function AnalysisTaskStatus({ taskId }: { taskId: string }) {
       <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm"><p className="font-medium">{task.status === "failed" ? "失败阶段" : "当前阶段"}</p><p className="mt-1 text-muted-foreground">{stageLabel(task, activeStage)}</p></div>
       {task.status === "completed" && <p className="mt-4 text-sm text-emerald-700 dark:text-emerald-300">报告已生成，可继续查看分析结论。</p>}
       {task.status === "failed" && <Button className="mt-4" disabled={isRetrying} onClick={() => void retry()} type="button">{isRetrying ? "正在重新分析…" : "重新分析"}</Button>}
+      <AnalysisAgentRunHistory agentRuns={task.agent_runs} />
     </>}
     {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
   </section>;

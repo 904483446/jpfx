@@ -34,6 +34,7 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "competitor_candidates",
             "task_evidence",
             "competitor_reports",
+            "analysis_agent_runs",
         }.issubset(inspector.get_table_names())
         unique_constraints = inspector.get_unique_constraints("document_chunks")
         assert frozenset({"document_id", "chunk_index"}) in {
@@ -64,6 +65,11 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "document_chunks",
             ("id", "space_id", "user_id", "knowledge_base_id"),
         ) in evidence_foreign_keys
+        agent_run_constraints = inspector.get_unique_constraints("analysis_agent_runs")
+        assert frozenset({"task_id", "attempt", "agent_key"}) in {
+            frozenset(constraint["column_names"])
+            for constraint in agent_run_constraints
+        }
         with engine.connect() as connection:
             embedding_type = connection.scalar(
                 text(
@@ -97,6 +103,7 @@ def test_initial_migration_round_trip_on_empty_test_database():
             "competitor_candidates",
             "task_evidence",
             "competitor_reports",
+            "analysis_agent_runs",
         }.intersection(inspect(engine).get_table_names())
         with engine.connect() as connection:
             retained_extensions = set(

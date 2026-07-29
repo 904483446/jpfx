@@ -29,6 +29,7 @@ def test_base_models_define_required_tables_and_columns():
         "document_chunks",
         "model_configs",
         "analysis_tasks",
+        "analysis_agent_runs",
         "competitor_candidates",
         "task_evidence",
         "competitor_reports",
