@@ -7,7 +7,7 @@ vi.mock("@/lib/analysis-tasks", () => ({ getAnalysisTask, retryAnalysisTask }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 import { AnalysisTaskStatus } from "./analysis-task-status";
 
-const failedTask = { id: "task-1", space_id: "space-1", title: "写作助手", industry: "AI", product_direction: "写作", keywords: [], known_competitors: [], discovery_mode: "semi_auto", status: "failed", stage: "模型调用失败", completed_at: null, final_competitors: ["Example AI"], candidates: [] };
+const failedTask = { id: "task-1", space_id: "space-1", title: "写作助手", industry: "AI", product_direction: "写作", keywords: [], known_competitors: [], discovery_mode: "semi_auto", status: "failed", stage: "模型调用失败", completed_at: null, final_competitors: ["Example AI"], candidates: [], agent_runs: [] };
 
 describe("AnalysisTaskStatus", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); vi.useRealTimers(); });
@@ -62,6 +62,14 @@ describe("AnalysisTaskStatus", () => {
 
     expect(await screen.findAllByText("证据质量检查")).not.toHaveLength(0);
     expect(screen.queryByText("quality_checking")).not.toBeInTheDocument();
+  });
+
+  it("shows the agent run history returned with the task", async () => {
+    getAnalysisTask.mockResolvedValueOnce({ ...failedTask, agent_runs: [{ attempt: 1, agent_key: "quality_check", status: "failed", started_at: null, completed_at: null, failure_reason: "证据质量不足，请补充公开来源后重试" }] });
+    render(<AnalysisTaskStatus taskId="task-1" />);
+
+    expect(await screen.findByText("Agent 运行记录")).toBeInTheDocument();
+    expect(screen.getByText("证据质量不足，请补充公开来源后重试")).toBeInTheDocument();
   });
 
   it.each([
