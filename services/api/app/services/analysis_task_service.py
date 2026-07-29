@@ -11,6 +11,7 @@ from app.core.errors import (
 )
 from app.models import AnalysisTask, CompetitorCandidate, TaskEvidence, User
 from app.schemas.analysis_task import AnalysisTaskCreateRequest
+from app.services.analysis_agent_run_service import create_agent_run_attempt
 from app.services.candidate_discovery_service import SearchProvider, discover_candidates
 from app.services.space_service import get_space
 
@@ -141,6 +142,7 @@ def retry_analysis_task(
     transition_task(task, "queued")
     task.error_message = None
     task.stage = None
+    create_agent_run_attempt(database_session, task)
     database_session.commit()
     database_session.refresh(task)
     return task
@@ -155,6 +157,7 @@ def queue_analysis_task(
     transition_task(task, "queued")
     task.error_message = None
     task.stage = "queued"
+    create_agent_run_attempt(database_session, task)
     database_session.commit()
     database_session.refresh(task)
     return task

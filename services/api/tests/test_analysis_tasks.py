@@ -8,6 +8,7 @@ from app.db.session import get_db_session
 from app.main import app
 from app.models import AnalysisTask, CompetitorCandidate, TaskEvidence, User
 from app.schemas.auth import RegisterRequest
+from app.services.analysis_agent_run_service import create_agent_run_attempt
 from app.services.auth_service import register_user
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -265,6 +266,40 @@ def test_run_queues_task_and_schedules_background_work_by_task_id(
 
     assert response.status_code == 202
     assert response.json()["status"] == "queued"
+    assert response.json()["agent_runs"] == [
+        {
+            "attempt": 1,
+            "agent_key": "evidence_collection",
+            "status": "queued",
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
+        },
+        {
+            "attempt": 1,
+            "agent_key": "quality_check",
+            "status": "queued",
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
+        },
+        {
+            "attempt": 1,
+            "agent_key": "model_analysis",
+            "status": "queued",
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
+        },
+        {
+            "attempt": 1,
+            "agent_key": "report_generation",
+            "status": "queued",
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
+        },
+    ]
     assert scheduled_task_ids == [task.id]
 
 
@@ -278,6 +313,7 @@ def test_retry_queues_failed_task_and_schedules_background_work_by_task_id(
     task_payload = create_task(client, space["id"])
     task = database_session.get(AnalysisTask, task_payload["id"])
     assert task is not None
+    create_agent_run_attempt(database_session, task)
     task.status = "failed"
     database_session.commit()
     scheduled_task_ids = []
@@ -291,4 +327,14 @@ def test_retry_queues_failed_task_and_schedules_background_work_by_task_id(
 
     assert response.status_code == 200
     assert response.json()["status"] == "queued"
+    assert [run["attempt"] for run in response.json()["agent_runs"]] == [
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+    ]
     assert scheduled_task_ids == [task.id]
