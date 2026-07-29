@@ -7,9 +7,10 @@ import { ApiClientError } from "@/lib/api-client";
 import { getAnalysisTask, retryAnalysisTask, type AnalysisTask } from "@/lib/analysis-tasks";
 
 const statusLabels: Record<AnalysisTask["status"], string> = { draft: "待确认", queued: "等待执行", running: "分析中", completed: "已完成", failed: "分析失败" };
-const stages = ["任务已创建", "候选确认", "分析准备", "证据采集", "模型调用", "报告生成"];
+const stages = ["任务已创建", "候选确认", "分析准备", "证据采集", "证据质量检查", "模型调用", "报告生成"];
 const backendStageLabels: Record<string, string> = {
   retrieving_private_knowledge: "私有知识检索",
+  quality_checking: "证据质量检查",
   analyzing: "正在模型分析",
 };
 
@@ -20,9 +21,10 @@ function stagePosition(task: AnalysisTask) {
   if (task.status === "failed") return null;
   const stage = task.stage ?? "";
   if (stage === "retrieving_private_knowledge") return 3;
-  if (stage === "analyzing") return 4;
-  if (stage.includes("报告")) return 5;
-  if (stage.includes("模型")) return 4;
+  if (stage === "quality_checking") return 4;
+  if (stage === "analyzing") return 5;
+  if (stage.includes("报告")) return 6;
+  if (stage.includes("模型")) return 5;
   if (stage.includes("证据") || stage.includes("检索")) return 3;
   return 2;
 }

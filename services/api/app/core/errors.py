@@ -162,6 +162,14 @@ def analysis_pipeline_error() -> AppError:
     )
 
 
+def evidence_quality_failed(message: str) -> AppError:
+    return AppError(
+        status_code=422,
+        code="EVIDENCE_QUALITY_FAILED",
+        message=f"证据质量检查未通过：{message}",
+    )
+
+
 def search_not_configured() -> AppError:
     return AppError(
         status_code=409,

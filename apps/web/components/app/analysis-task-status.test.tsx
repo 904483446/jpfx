@@ -56,6 +56,14 @@ describe("AnalysisTaskStatus", () => {
     expect(screen.getByText("模型调用")).not.toHaveClass("font-medium");
   });
 
+  it("shows evidence quality checking as a distinct running stage", async () => {
+    getAnalysisTask.mockResolvedValueOnce({ ...failedTask, status: "running", stage: "quality_checking" });
+    render(<AnalysisTaskStatus taskId="task-1" />);
+
+    expect(await screen.findAllByText("证据质量检查")).not.toHaveLength(0);
+    expect(screen.queryByText("quality_checking")).not.toBeInTheDocument();
+  });
+
   it.each([
     ["retrieving_private_knowledge", "私有知识检索", "证据采集"],
     ["analyzing", "正在模型分析", "模型调用"],
