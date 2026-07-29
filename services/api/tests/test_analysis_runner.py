@@ -226,7 +226,9 @@ def test_analysis_runner_fails_without_evidence_before_calling_provider(
     assert task is not None
     assert task.status == "failed"
     assert task.error_message == "证据质量检查未通过：没有可追溯证据"
-    assert database_session.query(CompetitorReport).filter_by(task_id=task.id).count() == 0
+    assert (
+        database_session.query(CompetitorReport).filter_by(task_id=task.id).count() == 0
+    )
     assert provider.prompts == []
 
 

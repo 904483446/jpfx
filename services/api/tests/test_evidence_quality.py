@@ -2,7 +2,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-
 from app.core.errors import AppError
 from app.services.evidence_quality import validate_evidence_quality
 
@@ -51,9 +50,7 @@ def test_validate_evidence_quality_rejects_untraceable_web_evidence(source_url):
 
 def test_validate_evidence_quality_rejects_private_evidence_without_all_links():
     with pytest.raises(AppError, match="私有知识库证据缺少文档关联"):
-        validate_evidence_quality(
-            [_evidence("private_knowledge", document_id=uuid4())]
-        )
+        validate_evidence_quality([_evidence("private_knowledge", document_id=uuid4())])
 
 
 def test_validate_evidence_quality_rejects_model_inference_as_traceable_evidence():

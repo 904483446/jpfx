@@ -19,9 +19,7 @@ def validate_evidence_quality(
     evidence: Sequence[TaskEvidence],
 ) -> EvidenceQualitySummary:
     traceable_evidence = [
-        item
-        for item in evidence
-        if item.source_type in {"web", "private_knowledge"}
+        item for item in evidence if item.source_type in {"web", "private_knowledge"}
     ]
     if not traceable_evidence:
         raise evidence_quality_failed("没有可追溯证据")
@@ -36,9 +34,7 @@ def validate_evidence_quality(
                 raise evidence_quality_failed("网页证据缺少有效来源链接")
             web_evidence_count += 1
         else:
-            if not all(
-                (item.document_id, item.chunk_id, item.knowledge_base_id)
-            ):
+            if not all((item.document_id, item.chunk_id, item.knowledge_base_id)):
                 raise evidence_quality_failed("私有知识库证据缺少文档关联")
             private_knowledge_evidence_count += 1
 
