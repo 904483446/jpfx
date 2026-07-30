@@ -16,6 +16,19 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 import { DeepSeekSettings } from "./deepseek-settings";
 
 describe("DeepSeekSettings", () => {
+  it("presents the page as model settings without revealing a full API key", async () => {
+    getDeepSeekConfig.mockResolvedValueOnce({
+      is_configured: true,
+      api_key_hint: "••••1234",
+      default_model: "deepseek-chat",
+    });
+    render(<DeepSeekSettings />);
+
+    expect(await screen.findByRole("heading", { name: "模型设置" })).toBeInTheDocument();
+    expect(screen.getByText("••••1234")).toBeInTheDocument();
+    expect(screen.queryByText("test-key-123")).not.toBeInTheDocument();
+  });
+
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
   it("submits the key but never renders it after save", async () => {
