@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "./app-shell";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app",
+  useRouter: () => ({ replace: vi.fn() }),
+}));
 
 describe("AppShell", () => {
   it("exposes the primary navigation and keeps page content in the main landmark", () => {
