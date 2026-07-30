@@ -9,7 +9,10 @@ const { getCurrentUser, replace } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth", () => ({ getCurrentUser }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app",
+  useRouter: () => ({ replace }),
+}));
 
 import { AuthenticatedApp } from "./authenticated-app";
 import { AppShell } from "@/components/app-shell";
@@ -34,7 +37,7 @@ describe("AuthenticatedApp", () => {
       resolveUser!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
     });
     expect(await screen.findByRole("heading")).toBeInTheDocument();
-    expect(await screen.findByText("user@example.com")).toBeInTheDocument();
+    expect(await screen.findByText(/测试用户/)).toBeInTheDocument();
     expect(screen.queryByTestId("auth-loading-skeleton")).not.toBeInTheDocument();
   });
 
@@ -47,8 +50,8 @@ describe("AuthenticatedApp", () => {
     await waitFor(() => expect(getCurrentUser).toHaveBeenCalledTimes(1));
     resolveUser!({ id: "user-1", display_name: "测试用户", email: "user@example.com", is_admin: false, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" });
 
-    expect(await screen.findByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
-    expect(screen.getByText("user@example.com")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "研究总览" })).toBeInTheDocument();
+    expect(screen.getByText(/测试用户/)).toBeInTheDocument();
   });
 
   it("未授权时仅跳转到登录页", async () => {
@@ -104,12 +107,12 @@ describe("AuthenticatedApp", () => {
       await Promise.resolve();
     });
 
-    expect(await screen.findByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "研究总览" })).toBeInTheDocument();
     await act(async () => {
       rejectEarlierRetry!(new ApiClientError("UNAUTHORIZED", "登录已失效"));
       await Promise.resolve();
     });
-    expect(screen.getByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "研究总览" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
 
@@ -124,7 +127,7 @@ describe("AuthenticatedApp", () => {
     expect(replace).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "重试" }));
 
-    expect(await screen.findByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "研究总览" })).toBeInTheDocument();
     expect(getCurrentUser).toHaveBeenCalledTimes(2);
     expect(replace).not.toHaveBeenCalled();
   });

@@ -2,14 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { LogoutControl } from "@/components/auth/logout-control";
-
-const navigationItems = [
-  { href: "/app", label: "工作台", note: "空间总览" },
-  { href: "/app/spaces", label: "产品空间", note: "资料与洞察" },
-  { href: "/app/tasks", label: "分析任务", note: "研究队列" },
-  { href: "/app/reports", label: "报告中心", note: "交付归档" },
-  { href: "/app/settings", label: "设置", note: "账号与模型" },
-];
+import { AppNavigation } from "@/components/app-navigation";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -18,12 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <aside aria-label="主导航" className="border-b border-border bg-card lg:border-r lg:border-b-0">
           <div className="flex h-full flex-col px-5 py-6 lg:sticky lg:top-0 lg:min-h-screen">
             <BrandMark />
-            <nav aria-label="主导航" className="mt-10">
-              <p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">目录</p>
-              <ul className="mt-3 space-y-1">
-                {navigationItems.map((item) => <li key={item.href}><Link className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-border hover:bg-muted focus-visible:border-ring" href={item.href}><span className="block text-sm font-medium">{item.label}</span><span className="mt-0.5 block text-xs text-muted-foreground group-hover:text-foreground">{item.note}</span></Link></li>)}
-              </ul>
-            </nav>
+            <AppNavigation />
             <p className="mt-auto hidden border-t border-border pt-4 text-xs leading-5 text-muted-foreground lg:block">以可追溯证据组织每一次竞品研究。</p>
           </div>
         </aside>

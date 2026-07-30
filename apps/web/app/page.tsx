@@ -10,7 +10,7 @@ function ProductWorkflowPreview() {
     <section aria-label="产品流程预览" className="border border-border bg-card p-5 shadow-sm sm:p-7">
       <div className="flex items-center justify-between border-b border-border pb-4">
         <p className="font-mono text-xs tracking-[0.16em] text-muted-foreground">PRODUCT WORKFLOW</p>
-        <span className="text-xs text-muted-foreground">流程预览</span>
+        <span className="text-xs font-medium text-primary">研究流程</span>
       </div>
       <ol className="mt-7 space-y-3">
         {workflow.map((item, index) => (
@@ -20,6 +20,9 @@ function ProductWorkflowPreview() {
           </li>
         ))}
       </ol>
+      <p className="mt-5 border-t border-border pt-4 text-sm leading-6 text-muted-foreground">
+        每一步都保留可核查的来源与研究记录。
+      </p>
     </section>
   );
 }

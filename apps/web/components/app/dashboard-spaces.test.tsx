@@ -38,8 +38,17 @@ describe("DashboardSpaces", () => {
     listSpaces.mockResolvedValueOnce([space]);
     render(<DashboardSpaces user={currentUser} />);
     expect(screen.getByText("正在加载产品空间…")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "欢迎回来，测试用户" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "研究总览" })).toBeInTheDocument();
+    expect(screen.getByText(/测试用户/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "企业知识库 Copilot" })).toHaveAttribute("href", "/app/spaces/space-1");
+  });
+
+  it("uses a research overview heading while keeping the signed-in user visible", async () => {
+    listSpaces.mockResolvedValueOnce([space]);
+    render(<DashboardSpaces user={currentUser} />);
+
+    expect(await screen.findByRole("heading", { name: "研究总览" })).toBeInTheDocument();
+    expect(screen.getByText(/测试用户/)).toBeInTheDocument();
   });
 
   it("renders empty state and opens create dialog", async () => {

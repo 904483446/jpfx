@@ -75,7 +75,7 @@ export function DeepSeekSettings() {
           <p className="text-xs font-semibold tracking-[0.24em] text-primary">MODEL DOSSIER · DEEPSEEK</p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground" id="deepseek-settings-heading">模型访问凭据</h1>
+              <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground" id="deepseek-settings-heading">模型设置</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">密钥仅用于本次提交。页面不回显、不写入浏览器本地存储，只展示服务端返回的脱敏状态。</p>
             </div>
             <span className={`inline-flex w-fit items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${configured ? "border-primary/25 bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>

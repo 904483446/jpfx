@@ -22,7 +22,7 @@ export function DashboardSpaces({ user }: { user: CurrentUser }) {
   }, [replace]);
   useEffect(() => { let active = true; void Promise.resolve().then(() => { if (active) return loadSpaces(); }); return () => { active = false; requestVersion.current += 1; }; }, [loadSpaces]);
   return <div className="max-w-6xl">
-    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">工作台 / 01</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">欢迎回来，{user.display_name}</h1><p className="mt-2 text-sm text-muted-foreground">{user.email}</p></div><Button onClick={() => setIsDialogOpen(true)} type="button">新建产品空间</Button></div>
+    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6"><div><p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground">工作台 / 01</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">研究总览</h1><p className="mt-2 text-sm text-muted-foreground">{user.display_name}，从产品空间开始组织资料、任务与可核查结论。</p></div><Button onClick={() => setIsDialogOpen(true)} type="button">新建产品空间</Button></div>
     <div className="mt-8">
       {spaces === null && !error && <div aria-busy="true" className="grid gap-4 md:grid-cols-2" data-testid="space-list-skeleton"><div className="h-44 animate-pulse border border-border bg-card" /><div className="h-44 animate-pulse border border-border bg-card" /><span className="sr-only">正在加载产品空间…</span></div>}
       {error && <div className="space-y-4"><p className="text-sm text-destructive" role="alert">{error}</p><Button onClick={loadSpaces} type="button" variant="outline">重试</Button></div>}
