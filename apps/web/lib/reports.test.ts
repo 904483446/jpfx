@@ -38,10 +38,11 @@ describe("report API client", () => {
   it("downloads a PDF using credentialed fetch and the response blob", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://127.0.0.1:8000/api/v1");
     const blob = new Blob(["pdf"], { type: "application/pdf" });
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(blob, {
-      status: 200,
-      headers: { "Content-Disposition": 'attachment; filename="report.pdf"' },
-    }));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      blob: vi.fn().mockResolvedValue(blob),
+      headers: new Headers({ "Content-Disposition": 'attachment; filename="report.pdf"' }),
+    } as unknown as Response);
     const createObjectURL = vi.fn(() => "blob:report");
     const revokeObjectURL = vi.fn();
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURL });
