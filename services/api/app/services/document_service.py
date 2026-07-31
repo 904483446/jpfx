@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import document_not_found
 from app.models import Document, KnowledgeBase, User
-from app.services.document_storage import LocalDocumentStorage
+from app.services.document_storage import DocumentStorage
 from app.services.space_service import get_space
 
 
@@ -15,7 +15,7 @@ def create_document(
     space_id: UUID,
     filename: str,
     content: bytes,
-    storage: LocalDocumentStorage,
+    storage: DocumentStorage,
 ) -> Document:
     space = get_space(database_session, user, space_id)
     knowledge_base = database_session.scalar(
@@ -54,7 +54,7 @@ async def create_uploaded_document(
     space_id: UUID,
     filename: str,
     upload,
-    storage: LocalDocumentStorage,
+    storage: DocumentStorage,
 ) -> Document:
     space = get_space(database_session, user, space_id)
     knowledge_base = database_session.scalar(
@@ -101,7 +101,7 @@ def delete_document(
     database_session: Session,
     user: User,
     document_id: UUID,
-    storage: LocalDocumentStorage,
+    storage: DocumentStorage,
 ) -> None:
     document = database_session.scalar(
         select(Document).where(Document.id == document_id, Document.user_id == user.id)

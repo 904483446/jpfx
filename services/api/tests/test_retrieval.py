@@ -8,6 +8,7 @@ from app.core.errors import (
     document_content_not_extractable,
     embedding_not_configured,
 )
+from app.services.document_storage import LocalDocumentStorage
 
 
 class FakeSession:
@@ -58,6 +59,7 @@ def test_index_document_marks_uploaded_document_indexed_and_replaces_chunks(
         error_message=None,
     )
     (tmp_path / document.storage_path).write_text("可检索正文", encoding="utf-8")
+    storage = LocalDocumentStorage(tmp_path)
     session = FakeSession()
     provider = FakeEmbeddingProvider([[0.1] * 1024])
     monkeypatch.setattr(retrieval_service, "get_owned_document", lambda *_: document)
@@ -68,7 +70,7 @@ def test_index_document_marks_uploaded_document_indexed_and_replaces_chunks(
     )
 
     result = retrieval_service.index_document(
-        session, user, document.id, tmp_path, provider
+        session, user, document.id, storage, provider
     )
 
     assert result.status == "indexed"
@@ -100,15 +102,13 @@ def test_index_document_marks_failed_and_rolls_back_new_chunks(
         error_message=None,
     )
     session = FakeSession()
-    monkeypatch.setattr(retrieval_service, "get_owned_document", lambda *_: document)
-    monkeypatch.setattr(
-        retrieval_service,
-        "read_document_content",
-        lambda *_: (_ for _ in ()).throw(document_content_not_extractable()),
+    storage = SimpleNamespace(
+        read=lambda *_: (_ for _ in ()).throw(document_content_not_extractable())
     )
+    monkeypatch.setattr(retrieval_service, "get_owned_document", lambda *_: document)
 
     result = retrieval_service.index_document(
-        session, user, document.id, tmp_path, FakeEmbeddingProvider([])
+        session, user, document.id, storage, FakeEmbeddingProvider([])
     )
 
     assert result.status == "failed"
@@ -135,6 +135,7 @@ def test_index_document_persists_failed_status_then_reraises_embedding_error(
         error_message=None,
     )
     (tmp_path / document.storage_path).write_text("可检索正文", encoding="utf-8")
+    storage = LocalDocumentStorage(tmp_path)
     session = FakeSession()
     monkeypatch.setattr(retrieval_service, "get_owned_document", lambda *_: document)
     monkeypatch.setattr(
@@ -149,7 +150,7 @@ def test_index_document_persists_failed_status_then_reraises_embedding_error(
 
     with pytest.raises(AppError) as captured:
         retrieval_service.index_document(
-            session, user, document.id, tmp_path, MissingKeyProvider()
+            session, user, document.id, storage, MissingKeyProvider()
         )
 
     assert captured.value.code == "EMBEDDING_NOT_CONFIGURED"
@@ -171,7 +172,7 @@ def test_index_document_hides_other_users_document(
             FakeSession(),
             SimpleNamespace(id=uuid4()),
             uuid4(),
-            tmp_path,
+            LocalDocumentStorage(tmp_path),
             FakeEmbeddingProvider([]),
         )
 
@@ -189,7 +190,11 @@ def test_index_document_rejects_document_already_being_processed(
 
     with pytest.raises(AppError) as captured:
         retrieval_service.index_document(
-            FakeSession(), user, document.id, tmp_path, FakeEmbeddingProvider([])
+            FakeSession(),
+            user,
+            document.id,
+            LocalDocumentStorage(tmp_path),
+            FakeEmbeddingProvider([]),
         )
 
     assert captured.value.code == "DOCUMENT_NOT_INDEXABLE"

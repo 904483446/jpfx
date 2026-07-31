@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
@@ -11,6 +11,7 @@ class Settings(BaseSettings):
         env_file=ROOT_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
+        hide_input_in_errors=True,
     )
 
     app_name: str = "AI Competitor Intelligence Workspace API"
@@ -23,6 +24,9 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = False
     cors_allowed_origins: str = "http://127.0.0.1:3000"
     document_storage_root: Path = Path(__file__).resolve().parents[2] / "storage"
+    supabase_url: str | None = None
+    supabase_service_role_key: str | None = None
+    supabase_storage_bucket: str = "jpfx-documents"
     dashscope_api_key: str | None = None
     api_key_encryption_secret: str | None = None
     bocha_api_key: str | None = None
@@ -36,6 +40,12 @@ class Settings(BaseSettings):
         if "*" in origins:
             raise ValueError("CORS 凭据请求不允许通配符来源")
         return value
+
+    @model_validator(mode="after")
+    def validate_supabase_storage_configuration(self) -> "Settings":
+        if (self.supabase_url is None) != (self.supabase_service_role_key is None):
+            raise ValueError("Supabase URL 与服务角色密钥必须同时配置或同时缺失")
+        return self
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:

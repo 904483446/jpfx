@@ -136,6 +136,13 @@ npm.cmd run build
 - 数据：PostgreSQL、pgvector 与受空间隔离的资料存储。
 - 外部能力：模型、嵌入和检索 Provider 为可选配置，不包含任何真实凭据。
 
+## 部署边界：Supabase Storage
+
+- 本地开发在未配置 Supabase Storage 变量时继续使用本地资料目录；不要为本地开发复制、读取或提交 Railway 生产变量。
+- 生产环境仅在 Railway 配置 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY` 与 `SUPABASE_STORAGE_BUCKET=jpfx-documents`。`SUPABASE_SERVICE_ROLE_KEY` 只能保存在 Railway Variables，绝不暴露给浏览器、前端环境变量、日志或仓库。
+- 在 Supabase Dashboard 创建私有（非 public）bucket `jpfx-documents`。对象访问由后端使用服务端凭据完成，浏览器不直接持有 bucket 的访问密钥。
+- 真正上线前，按交接文档完成一次无敏感信息 TXT 的上传、刷新、重新部署、索引与删除验收；本仓库的本地测试不等同于真实 Supabase 或 Railway 验证。
+
 ## 项目文档
 
 - [PRD.md](PRD.md)：产品范围与目标用户。

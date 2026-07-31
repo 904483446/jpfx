@@ -8,6 +8,7 @@ from app.main import app
 from app.schemas.auth import RegisterRequest
 from app.schemas.space import SpaceCreateRequest
 from app.services.auth_service import register_user
+from app.services.document_storage import LocalDocumentStorage, get_document_storage
 from app.services.space_service import create_space
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -25,6 +26,9 @@ def client(
     monkeypatch.setattr(settings, "jwt_secret", TEST_SECRET)
     monkeypatch.setattr(settings, "document_storage_root", tmp_path)
     app.dependency_overrides[get_db_session] = override_database_session
+    app.dependency_overrides[get_document_storage] = lambda: LocalDocumentStorage(
+        tmp_path
+    )
     try:
         yield TestClient(app)
     finally:
@@ -85,3 +89,20 @@ def test_document_upload_rejects_invalid_file(
         "message": "仅支持 PDF、DOCX、TXT 和 MD 文档",
         "details": {},
     }
+
+
+def test_document_client_fixture_overrides_and_cleans_up_document_storage(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+):
+    fixture = client.__wrapped__(object(), monkeypatch, tmp_path)
+
+    next(fixture)
+    storage = app.dependency_overrides[get_document_storage]()
+
+    assert isinstance(storage, LocalDocumentStorage)
+    assert storage.root == tmp_path.resolve()
+
+    with pytest.raises(StopIteration):
+        next(fixture)
+
+    assert get_document_storage not in app.dependency_overrides
