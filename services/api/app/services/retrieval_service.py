@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 from uuid import UUID
 
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError, document_not_found, document_not_indexable
 from app.models import Document, DocumentChunk, User
 from app.services.document_parser import extract_text
+from app.services.document_storage import DocumentStorage
 from app.services.space_service import get_space
 from app.services.text_chunker import chunk_text
 
@@ -36,19 +36,11 @@ def get_owned_document(
     )
 
 
-def read_document_content(storage_root: Path, storage_path: str) -> bytes:
-    root = storage_root.resolve()
-    source = (root / storage_path).resolve()
-    if not source.is_relative_to(root):
-        raise FileNotFoundError(storage_path)
-    return source.read_bytes()
-
-
 def index_document(
     database_session: Session,
     user: User,
     document_id: UUID,
-    storage_root: Path,
+    storage: DocumentStorage,
     embedding_provider: EmbeddingProvider,
 ) -> Document:
     document = get_owned_document(database_session, user, document_id)
@@ -60,7 +52,7 @@ def index_document(
     try:
         document.status = "processing"
         document.error_message = None
-        content = read_document_content(storage_root, document.storage_path)
+        content = storage.read(document.storage_path)
         chunks = chunk_text(extract_text(document.filename, content))
         vectors = embedding_provider.embed([chunk.content for chunk in chunks])
         if len(vectors) != len(chunks) or any(

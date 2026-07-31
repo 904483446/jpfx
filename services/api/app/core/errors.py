@@ -98,6 +98,14 @@ def document_empty() -> AppError:
     return AppError(status_code=400, code="DOCUMENT_EMPTY", message="文档不能为空")
 
 
+def document_storage_error() -> AppError:
+    return AppError(
+        status_code=502,
+        code="DOCUMENT_STORAGE_ERROR",
+        message="文档存储服务暂时不可用",
+    )
+
+
 def document_content_not_extractable() -> AppError:
     return AppError(
         status_code=400,

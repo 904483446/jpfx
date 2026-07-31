@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.config import settings
 from app.db.session import get_db_session
 from app.models import User
 from app.schemas.document import DocumentResponse
@@ -14,7 +13,7 @@ from app.services.document_service import (
     delete_document,
     list_documents,
 )
-from app.services.document_storage import LocalDocumentStorage
+from app.services.document_storage import DocumentStorage, get_document_storage
 from app.services.embedding_provider import DashScopeEmbeddingProvider
 from app.services.retrieval_service import index_document
 
@@ -32,6 +31,7 @@ async def upload_document(
     file: Annotated[UploadFile, File()],
     current_user: Annotated[User, Depends(get_current_user)],
     database_session: Annotated[Session, Depends(get_db_session)],
+    storage: Annotated[DocumentStorage, Depends(get_document_storage)],
 ) -> DocumentResponse:
     document = await create_uploaded_document(
         database_session,
@@ -39,7 +39,7 @@ async def upload_document(
         space_id,
         file.filename or "",
         file,
-        LocalDocumentStorage(settings.document_storage_root),
+        storage,
     )
     return DocumentResponse.model_validate(document)
 
@@ -61,12 +61,13 @@ def remove_document(
     document_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     database_session: Annotated[Session, Depends(get_db_session)],
+    storage: Annotated[DocumentStorage, Depends(get_document_storage)],
 ) -> None:
     delete_document(
         database_session,
         current_user,
         document_id,
-        LocalDocumentStorage(settings.document_storage_root),
+        storage,
     )
 
 
@@ -75,12 +76,13 @@ def index_existing_document(
     document_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     database_session: Annotated[Session, Depends(get_db_session)],
+    storage: Annotated[DocumentStorage, Depends(get_document_storage)],
 ) -> DocumentResponse:
     document = index_document(
         database_session,
         current_user,
         document_id,
-        settings.document_storage_root,
+        storage,
         DashScopeEmbeddingProvider(),
     )
     return DocumentResponse.model_validate(document)

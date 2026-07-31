@@ -3,7 +3,10 @@ from uuid import uuid4
 
 import pytest
 from app.core.errors import AppError
-from app.services.document_storage import LocalDocumentStorage
+from app.services.document_storage import (
+    DocumentStorage,
+    LocalDocumentStorage,
+)
 from fastapi import UploadFile
 
 
@@ -15,6 +18,10 @@ def test_storage_writes_supported_file_under_user_and_space(tmp_path):
     assert stored.size == 3
     assert "brief.PDF" not in stored.relative_path
     assert (tmp_path / stored.relative_path).read_bytes() == b"pdf"
+
+
+def test_local_storage_implements_document_storage_protocol(tmp_path):
+    assert isinstance(LocalDocumentStorage(tmp_path), DocumentStorage)
 
 
 @pytest.mark.parametrize(
@@ -45,6 +52,13 @@ def test_storage_deletes_saved_file(tmp_path):
     storage.delete(stored.relative_path)
 
     assert not (tmp_path / stored.relative_path).exists()
+
+
+def test_storage_reads_saved_file(tmp_path):
+    storage = LocalDocumentStorage(tmp_path)
+    stored = storage.save(uuid4(), uuid4(), "brief.txt", b"content")
+
+    assert storage.read(stored.relative_path) == b"content"
 
 
 @pytest.mark.anyio
