@@ -1,9 +1,17 @@
+from collections.abc import Sequence
 from pathlib import Path
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
+
+def find_env_file(parents: Sequence[Path]) -> Path | None:
+    if len(parents) <= 4:
+        return None
+    return parents[4] / ".env"
+
+
+ROOT_ENV_FILE = find_env_file(Path(__file__).resolve().parents)
 
 
 class Settings(BaseSettings):

@@ -1,6 +1,12 @@
 import pytest
-from app.core.config import Settings
+from app.core.config import Settings, find_env_file
 from pydantic import ValidationError
+
+
+def test_find_env_file_returns_none_when_container_has_no_dotenv_file(tmp_path):
+    container_parents = [tmp_path / "app", tmp_path]
+
+    assert find_env_file(container_parents) is None
 
 
 def test_auth_settings_have_safe_development_defaults():
