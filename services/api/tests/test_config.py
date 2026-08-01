@@ -17,23 +17,23 @@ def test_auth_settings_have_safe_development_defaults():
 
 
 @pytest.mark.parametrize(
-    ("supabase_url", "supabase_service_role_key"),
+    ("supabase_url", "supabase_secret_key"),
     [
         ("https://project.supabase.co", None),
         (None, "test-service-role-key"),
     ],
 )
-def test_storage_settings_require_supabase_url_and_service_role_key_together(
-    supabase_url, supabase_service_role_key
+def test_storage_settings_require_supabase_url_and_secret_key_together(
+    supabase_url, supabase_secret_key
 ):
     with pytest.raises(ValidationError) as captured:
         Settings(
             _env_file=None,
             supabase_url=supabase_url,
-            supabase_service_role_key=supabase_service_role_key,
+            supabase_secret_key=supabase_secret_key,
         )
 
     error = str(captured.value)
-    assert "Supabase URL 与服务角色密钥必须同时配置或同时缺失" in error
+    assert "Supabase URL 与 Secret Key 必须同时配置或同时缺失" in error
     assert "project.supabase.co" not in error
     assert "test-service-role-key" not in error

@@ -16,14 +16,14 @@
 
 新增一个最小的对象存储协议，包含保存字节、异步保存上传流、读取字节和删除对象四项能力。`LocalDocumentStorage` 与新增的 `SupabaseDocumentStorage` 都实现该协议；资料服务和检索服务依赖协议而不是本地 `Path`。
 
-应用启动时根据 `SUPABASE_URL` 与 `SUPABASE_SERVICE_ROLE_KEY` 是否同时存在选择存储实现：两者均存在时使用 Supabase，否则使用本地存储。两者只存在一个时启动失败并给出中文配置错误，防止生产环境静默写回 Railway 临时磁盘。
+应用启动时根据 `SUPABASE_URL` 与 `SUPABASE_SECRET_KEY` 是否同时存在选择存储实现：两者均存在时使用 Supabase，否则使用本地存储。两者只存在一个时启动失败并给出中文配置错误，防止生产环境静默写回 Railway 临时磁盘。
 
 对象名继续使用 `user_id/space_id/随机 UUID.扩展名`。该值仍保存到现有 `documents.storage_path`；后端的所有读取、删除和索引操作继续以当前用户与空间授权为入口，因此 bucket 内对象路径不会作为外部可控访问凭据。
 
 ## Supabase Storage 交互
 
 - bucket 固定为私有的 `jpfx-documents`，由用户在 Supabase Dashboard 创建。
-- Railway 后端使用 `SUPABASE_SERVICE_ROLE_KEY` 调用 Supabase Storage HTTP API；该 Key 只保存在 Railway Variables，绝不发送给前端。
+- Railway 后端使用 `SUPABASE_SECRET_KEY`（新版 `sb_secret_...`）调用 Supabase Storage HTTP API；该 Key 只保存在 Railway Variables，绝不发送给前端。
 - 上传使用对象路径写入 bucket；已写入但数据库事务失败时删除对象，保持现有补偿语义。
 - 索引前下载对象字节，再复用现有 PDF/DOCX/TXT/MD 解析、切分和 pgvector 写入逻辑。
 - 删除资料时先删除对象，再删除数据库记录；对象不存在时仍保持删除接口幂等。
@@ -35,11 +35,11 @@
 
 ```text
 SUPABASE_URL=https://PROJECT_REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=service-role-secret
+SUPABASE_SECRET_KEY=sb_secret_replace-with-railway-secret-key
 SUPABASE_STORAGE_BUCKET=jpfx-documents
 ```
 
-`SUPABASE_STORAGE_BUCKET` 默认值为 `jpfx-documents`。`SUPABASE_URL` 与 `SUPABASE_SERVICE_ROLE_KEY` 必须同时配置或同时缺失。`.env.example` 只列出变量名称和替代值，不包含真实 Project Ref、密钥或数据库密码。
+`SUPABASE_STORAGE_BUCKET` 默认值为 `jpfx-documents`。`SUPABASE_URL` 与 `SUPABASE_SECRET_KEY` 必须同时配置或同时缺失。`.env.example` 只列出变量名称和替代值，不包含真实 Project Ref、密钥或数据库密码。
 
 ## 测试与验收
 

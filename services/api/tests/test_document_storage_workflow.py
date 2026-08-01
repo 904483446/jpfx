@@ -47,7 +47,7 @@ def test_document_storage_factory_uses_supabase_only_with_complete_configuration
             _env_file=None,
             document_storage_root=tmp_path,
             supabase_url="https://project.supabase.co",
-            supabase_service_role_key="test-service-role-key",
+            supabase_secret_key="test-secret-key",
             supabase_storage_bucket="test-documents",
         )
     )
@@ -55,7 +55,7 @@ def test_document_storage_factory_uses_supabase_only_with_complete_configuration
     assert isinstance(local, LocalDocumentStorage)
     assert isinstance(remote, SupabaseDocumentStorage)
     assert remote.url == "https://project.supabase.co"
-    assert remote.key == "test-service-role-key"
+    assert remote.key == "test-secret-key"
     assert remote.bucket == "test-documents"
 
 

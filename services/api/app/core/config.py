@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = "http://127.0.0.1:3000"
     document_storage_root: Path = Path(__file__).resolve().parents[2] / "storage"
     supabase_url: str | None = None
-    supabase_service_role_key: str | None = None
+    supabase_secret_key: str | None = None
     supabase_storage_bucket: str = "jpfx-documents"
     dashscope_api_key: str | None = None
     api_key_encryption_secret: str | None = None
@@ -43,8 +43,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_supabase_storage_configuration(self) -> "Settings":
-        if (self.supabase_url is None) != (self.supabase_service_role_key is None):
-            raise ValueError("Supabase URL 与服务角色密钥必须同时配置或同时缺失")
+        if (self.supabase_url is None) != (self.supabase_secret_key is None):
+            raise ValueError("Supabase URL 与 Secret Key 必须同时配置或同时缺失")
         return self
 
     @property

@@ -35,8 +35,8 @@ def test_supabase_storage_uploads_private_object_with_safe_path_and_headers():
         captured_request.url.path
         == f"/storage/v1/object/documents/{stored.relative_path}"
     )
-    assert captured_request.headers["authorization"] == "Bearer test-storage-key"
     assert captured_request.headers["apikey"] == "test-storage-key"
+    assert "authorization" not in captured_request.headers
     assert captured_request.content == b"pdf"
 
 

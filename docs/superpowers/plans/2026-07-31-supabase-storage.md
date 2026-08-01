@@ -22,7 +22,7 @@
 
 ```python
 def test_incomplete_supabase_storage_configuration_is_rejected():
-    with pytest.raises(ValidationError, match="SUPABASE_URL 与 SUPABASE_SERVICE_ROLE_KEY"):
+    with pytest.raises(ValidationError, match="Supabase URL 与 Secret Key"):
         Settings(_env_file=None, supabase_url="https://example.supabase.co")
 
 def test_storage_factory_uses_local_storage_without_supabase_configuration(tmp_path):
@@ -48,7 +48,7 @@ class DocumentStorage(Protocol):
 def create_document_storage(settings: Settings) -> DocumentStorage:
     if settings.supabase_url is None:
         return LocalDocumentStorage(settings.document_storage_root)
-    return SupabaseDocumentStorage(settings.supabase_url, settings.supabase_service_role_key, settings.supabase_storage_bucket)
+    return SupabaseDocumentStorage(settings.supabase_url, settings.supabase_secret_key, settings.supabase_storage_bucket)
 ```
 
 - [ ] **Step 4: 验证并提交**
@@ -89,7 +89,7 @@ Expected: FAIL，因 `SupabaseDocumentStorage` 尚不存在。
 - [ ] **Step 3: 实现最小 HTTP 客户端**
 
 ```python
-headers = {"Authorization": f"Bearer {service_role_key}", "apikey": service_role_key}
+headers = {"apikey": secret_key}
 upload_url = f"{base_url}/storage/v1/object/{bucket}/{relative_path}"
 download_url = upload_url
 ```
@@ -163,7 +163,7 @@ git commit -m "feat: route document workflows through storage adapter"
 
 ```text
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=replace-with-railway-service-variable
+SUPABASE_SECRET_KEY=replace-with-railway-secret-key
 SUPABASE_STORAGE_BUCKET=jpfx-documents
 ```
 
@@ -187,7 +187,7 @@ Expected: 所有本地可运行命令退出码为 0；不把该结果表述为�
 - [ ] **Step 3: 合并后用户执行线上验收**
 
 1. Supabase Dashboard 创建私有 bucket `jpfx-documents`。
-2. Railway Variables 添加 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`SUPABASE_STORAGE_BUCKET=jpfx-documents`。
+2. Railway Variables 添加 `SUPABASE_URL`、`SUPABASE_SECRET_KEY`、`SUPABASE_STORAGE_BUCKET=jpfx-documents`。
 3. Railway 重新部署后上传无敏感 TXT，刷新并再次部署后索引和删除该资料。
 4. 记录成功步骤与 HTTP 状态，不记录任何真实变量值。
 
