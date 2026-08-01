@@ -2,8 +2,8 @@
 
 ## 已完成的文档边界
 
-- `.env.example` 只提供变量名和占位值：`SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`SUPABASE_STORAGE_BUCKET`。
-- 生产存储使用 Supabase 私有 bucket `jpfx-documents`；服务角色密钥仅允许配置在 Railway Variables，不得提交、返回给前端、写入日志或文档。
+- `.env.example` 只提供变量名和占位值：`SUPABASE_URL`、`SUPABASE_SECRET_KEY`、`SUPABASE_STORAGE_BUCKET`。
+- 生产存储使用 Supabase 私有 bucket `jpfx-documents`；新版 Secret Key（`sb_secret_...`）仅允许配置在 Railway Variables，不得提交、返回给前端、写入日志或文档。
 - 未配置上述 Supabase 变量时，本地开发继续使用本地资料目录。
 
 ## 本地验证状态
@@ -15,7 +15,7 @@
 ## 合并后的线上验收（用户执行）
 
 1. 在 Supabase Dashboard 创建私有（非 public）bucket：`jpfx-documents`。
-2. 在 Railway Variables 配置 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY` 和 `SUPABASE_STORAGE_BUCKET=jpfx-documents`；只填写真实值，不在仓库、日志或交接记录中保存它们。
+2. 在 Railway Variables 配置 `SUPABASE_URL`、`SUPABASE_SECRET_KEY` 和 `SUPABASE_STORAGE_BUCKET=jpfx-documents`；只填写真实值，不在仓库、日志或交接记录中保存它们。
 3. 重新部署 Railway 服务。
 4. 上传一个不含敏感信息的 TXT 文件，刷新页面确认资料状态与列表可见。
 5. 再次重新部署 Railway 服务后，执行该资料的索引并删除，确认对象和资料记录均可正常处理。

@@ -44,11 +44,11 @@ class DocumentStorage(Protocol):
 def create_document_storage(configuration: Settings = settings) -> DocumentStorage:
     if (
         configuration.supabase_url is not None
-        and configuration.supabase_service_role_key is not None
+        and configuration.supabase_secret_key is not None
     ):
         return SupabaseDocumentStorage(
             configuration.supabase_url,
-            configuration.supabase_service_role_key,
+            configuration.supabase_secret_key,
             configuration.supabase_storage_bucket,
         )
     return LocalDocumentStorage(configuration.document_storage_root)
@@ -228,7 +228,6 @@ class SupabaseDocumentStorage:
 
     def _headers(self) -> dict[str, str]:
         return {
-            "Authorization": f"Bearer {self.key}",
             "apikey": self.key,
             "Content-Type": "application/octet-stream",
         }
